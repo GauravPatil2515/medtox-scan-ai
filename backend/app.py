@@ -26,7 +26,7 @@ except ImportError as e:
     MEDITOX_AVAILABLE = False
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"])
 
 # Global instances
 predictor = None
@@ -346,7 +346,125 @@ Respond in JSON format:
         traceback.print_exc()
         return jsonify({'error': f'Vision analysis failed: {str(e)}'}), 500
 
-@app.route('/api/analyze-image-text', methods=['POST'])
+@app.route('/api/analyze-chemical-text', methods=['POST'])
+def analyze_chemical_text():
+    """Enhanced AI-powered analysis of OCR text to identify chemical components and generate AI report"""
+    try:
+        if not groq_client:
+            return jsonify({'error': 'AI service not available'}), 503
+        
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'Text content required'}), 400
+        
+        extracted_text = data['text']
+        image_name = data.get('image_name', 'unknown')
+        
+        print(f"🔬 Analyzing chemical text from {image_name}: {extracted_text[:100]}...")
+        
+        # Enhanced AI prompt for chemical component analysis
+        ai_prompt = f"""You are an expert chemical analyst and pharmacist. Analyze the following OCR-extracted text from a chemical/pharmaceutical image and identify chemical components, generate SMILES, and provide a comprehensive AI report.
+
+EXTRACTED TEXT FROM IMAGE:
+{extracted_text}
+
+TASK: Identify chemical compounds, drugs, and active ingredients. Provide SMILES notation and detailed analysis.
+
+INSTRUCTIONS:
+1. Look for chemical names, drug names, active ingredients
+2. Ignore excipients, colors, preservatives, and inactive ingredients  
+3. Generate or provide correct SMILES notation for identified chemicals
+4. Provide detailed AI analysis of the chemical components
+5. Include safety considerations and chemical properties
+
+COMMON CHEMICAL SMILES DATABASE:
+- Paracetamol/Acetaminophen: CC(=O)Nc1ccc(O)cc1
+- Aspirin: CC(=O)Oc1ccccc1C(=O)O
+- Ibuprofen: CC(C)Cc1ccc(cc1)C(C)C(=O)O
+- Caffeine: CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+- Sodium Chloride: [Na+].[Cl-]
+- Glucose: C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O
+- Ethanol: CCO
+- Benzene: c1ccccc1
+- Acetone: CC(=O)C
+- Methanol: CO
+
+RESPOND IN JSON FORMAT:
+{{
+  "success": true,
+  "primary_ingredient": "main chemical/drug name",
+  "ingredients": ["list of chemical compounds found"],
+  "smiles": ["SMILES notation for each compound"],
+  "formulas": ["molecular formulas"],
+  "quantities": ["concentrations or amounts mentioned"],
+  "confidence": "high/medium/low",
+  "ai_report": "Detailed chemical analysis report including: molecular structure insights, pharmacological properties, safety considerations, potential interactions, and chemical classification. Be comprehensive and scientific.",
+  "safety_notes": ["important safety considerations"],
+  "chemical_class": ["classification of compounds (e.g., analgesic, antibiotic, etc.)"]
+}}
+
+Be thorough in your analysis and provide educational insights about the chemical components."""
+        
+        # Call Groq AI for chemical analysis
+        response = groq_client.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are an expert chemical analyst and pharmacist specializing in identifying chemical compounds from text and providing comprehensive analysis. Always respond with valid JSON and provide detailed, educational chemical insights."
+                },
+                {"role": "user", "content": ai_prompt}
+            ],
+            temperature=0.1,  # Low temperature for precise analysis
+            max_tokens=2000,
+            response_format={"type": "json_object"}
+        )
+        
+        ai_response = response.choices[0].message.content.strip()
+        print(f"✅ Groq AI response received: {ai_response[:200]}...")
+        
+        # Parse JSON response
+        try:
+            result = json.loads(ai_response)
+            print(f"✅ JSON parsed successfully: {list(result.keys())}")
+        except Exception as parse_error:
+            print(f"⚠️ JSON parsing failed: {parse_error}")
+            print(f"Raw AI response: {ai_response}")
+            # Fallback response
+            result = {
+                'success': False,
+                'primary_ingredient': '',
+                'ingredients': [],
+                'smiles': [],
+                'formulas': [],
+                'quantities': [],
+                'confidence': 'low',
+                'ai_report': f'Chemical analysis could not be completed. Raw extracted text: {extracted_text}',
+                'safety_notes': ['Unable to analyze - please verify chemical components manually'],
+                'chemical_class': []
+            }
+        
+        return jsonify({
+            'success': result.get('success', True),
+            'image_name': image_name,
+            'method': 'ocr_chemical_analysis',
+            'raw_text': extracted_text[:500],  # Include raw text for reference
+            'primary_ingredient': result.get('primary_ingredient', ''),
+            'ingredients': result.get('ingredients', []),
+            'smiles': result.get('smiles', []),
+            'formulas': result.get('formulas', []),
+            'quantities': result.get('quantities', []),
+            'confidence': result.get('confidence', 'medium'),
+            'ai_report': result.get('ai_report', 'Chemical analysis completed'),
+            'safety_notes': result.get('safety_notes', []),
+            'chemical_class': result.get('chemical_class', []),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"❌ Chemical text analysis error: {e}")
+        traceback.print_exc()
+        return jsonify({'error': f'Chemical analysis failed: {str(e)}'}), 500
 def analyze_image_text():
     """Enhanced AI-powered analysis of OCR extracted text to identify ingredients and SMILES"""
     try:
