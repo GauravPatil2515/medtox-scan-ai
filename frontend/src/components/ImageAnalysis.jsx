@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createWorker } from 'tesseract.js';
+import Tesseract from 'tesseract.js';
 import {
   PhotoIcon,
   ArrowUpTrayIcon,
@@ -43,7 +43,7 @@ const ImageAnalysis = () => {
     multiple: false
   });
 
-  // OCR Processing with AI Analysis (Dual approach: Vision API + OCR)
+  // OCR Processing with AI Analysis (Primary: Tesseract OCR + Groq LLM)
   const performOCR = async () => {
     if (!image || !imagePreview) {
       setError('Please upload an image first');
@@ -60,134 +60,82 @@ const ImageAnalysis = () => {
     try {
       setOcrProgress(10);
       
-      console.log('Starting AI Vision + OCR analysis...');
+      console.log('Starting Tesseract OCR + Groq AI analysis...');
       
-      // Method 1: Try Groq Vision API first (best accuracy for chemical structures)
-      let visionResult = null;
+      // Step 1: Extract text using Tesseract OCR (Primary Method)
+      setOcrProgress(20);
+      
+      console.log('Running Tesseract OCR extraction...');
+      
+      // Convert blob URL to image element
+      const img = new Image();
+      img.src = imagePreview;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      
+      setOcrProgress(30);
+      
+      // Create Tesseract worker with proper v6 API
+      console.log('Initializing Tesseract OCR...');
+      let ocrText = '';
+      
       try {
-        setOcrProgress(15);
+        // Use Tesseract.recognize directly (recommended for v6)
+        console.log('Starting OCR recognition...');
         
-        // Convert image to base64
-        const base64Image = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(image);
-        });
-        
-        setOcrProgress(25);
-        
-        // Call Groq Vision API
-        console.log('Calling Groq Vision API for direct image analysis...');
-        const visionResponse = await fetch('http://localhost:5000/api/analyze-image-vision', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            image_base64: base64Image,
-            image_name: image.name 
-          })
-        });
-        
-        if (visionResponse.ok) {
-          visionResult = await visionResponse.json();
-          console.log('✅ Vision API successful:', visionResult);
-          setOcrProgress(60);
-        } else {
-          console.log('⚠️ Vision API not available, falling back to OCR');
-        }
-      } catch (visionError) {
-        console.log('Vision API failed, using OCR fallback:', visionError);
-      }
-      
-        // Method 2: Enhanced OCR with preprocessing (always run as backup/supplement)
-        let ocrText = '';
-        if (!visionResult || visionResult.confidence === 'low') {
-          setOcrProgress(visionResult ? 65 : 30);
-          
-          console.log('Running enhanced OCR extraction...');
-          
-          // Convert blob URL to image element
-          const img = new Image();
-          img.src = imagePreview;
-          
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-          });
-          
-          setOcrProgress(visionResult ? 70 : 40);
-          
-          // Create Tesseract worker with enhanced settings
-          console.log('Creating Tesseract worker with enhanced settings...');
-          worker = await createWorker('eng');
-          await worker.loadLanguage('eng');
-          await worker.initialize('eng');
-          
-          // Configure for better medicine label recognition
-          await worker.setParameters({
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,()-/% ',
-            tessedit_pageseg_mode: '6', // Uniform block of text
-            tessedit_ocr_engine_mode: '1' // Neural nets LSTM only
-          });
-          
-          setOcrProgress(visionResult ? 75 : 50);
-          
-          // Perform OCR with multiple attempts for better accuracy
-          console.log('Recognizing text from image...');
-          try {
-            // First attempt with original file
-            const { data: { text, confidence } } = await worker.recognize(image);
-            ocrText = text.trim();
-            console.log(`OCR Complete, confidence: ${confidence}%, text extracted:`, ocrText.substring(0, 100));
-            
-            // If confidence is low, try image preprocessing
-            if (confidence < 70) {
-              console.log('Low confidence, trying image preprocessing...');
-              
-              // Create canvas for image preprocessing
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              
-              // Apply contrast enhancement
-              ctx.filter = 'contrast(150%) brightness(110%)';
-              ctx.drawImage(img, 0, 0);
-              
-              // Try OCR on enhanced image
-              const { data: { text: enhancedText, confidence: enhancedConfidence } } = await worker.recognize(canvas);
-              
-              if (enhancedConfidence > confidence) {
-                ocrText = enhancedText.trim();
-                console.log(`Enhanced OCR better, confidence: ${enhancedConfidence}%`);
+        const { data: { text } } = await Tesseract.recognize(
+          image,
+          'eng',
+          {
+            logger: m => {
+              console.log('Tesseract progress:', m);
+              if (m.status === 'recognizing text') {
+                const progress = 30 + (m.progress * 40); // 30-70%
+                setOcrProgress(Math.round(progress));
               }
-            }
-            
-          } catch (recognizeError) {
-            console.log('Recognition error with file, trying alternative methods:', recognizeError);
-            try {
-              // Fallback to preview URL
-              const { data: { text } } = await worker.recognize(imagePreview);
-              ocrText = text.trim();
-              console.log('OCR Complete with preview URL, text extracted:', ocrText.substring(0, 100));
-            } catch (previewError) {
-              console.log('All OCR methods failed:', previewError);
-              throw new Error('OCR recognition failed with all methods');
-            }
+            },
+            // Enhanced OCR options for better text recognition
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789()[]{}+-=.,;:% ',
+            preserve_interword_spaces: '1'
           }
+        );
+        
+        ocrText = text.trim();
+        console.log('✅ OCR Complete! Text extracted:', ocrText.substring(0, 200));
+        
+      } catch (tesseractError) {
+        console.error('Tesseract OCR failed:', tesseractError);
+        
+        // Fallback: Try with worker approach
+        try {
+          console.log('Trying fallback worker approach...');
+          worker = await Tesseract.createWorker('eng');
+          
+          const { data: { text } } = await worker.recognize(image);
+          ocrText = text.trim();
+          console.log('✅ Fallback OCR successful:', ocrText.substring(0, 200));
           
           await worker.terminate();
           worker = null;
           
-          setOcrProgress(visionResult ? 85 : 75);
-        }      // Method 3: AI Analysis of OCR text (if we have OCR text and no vision result)
+        } catch (fallbackError) {
+          console.error('All OCR methods failed:', fallbackError);
+          
+          // Final fallback - manual input mode
+          throw new Error('OCR_FAILED');
+        }
+      }
+      
+      setOcrProgress(70);
+      
+      // Step 2: Analyze OCR text with Groq LLM for chemical components
       let textAnalysisResult = null;
-      if (ocrText && !visionResult) {
-        console.log('Analyzing OCR text with AI...');
-        const textAnalysisResponse = await fetch('http://localhost:5000/api/analyze-image-text', {
+      if (ocrText && ocrText.length > 5) {
+        console.log('Analyzing OCR text with Groq AI for chemical components...');
+        const textAnalysisResponse = await fetch('http://localhost:5000/api/analyze-chemical-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -196,65 +144,101 @@ const ImageAnalysis = () => {
           })
         });
 
+        setOcrProgress(85);
+
         if (textAnalysisResponse.ok) {
           textAnalysisResult = await textAnalysisResponse.json();
-          console.log('✅ Text analysis successful:', textAnalysisResult);
+          console.log('✅ Chemical analysis successful:', textAnalysisResult);
+        } else {
+          console.log('⚠️ Chemical analysis failed, using raw OCR text');
+          textAnalysisResult = {
+            success: false,
+            raw_text: ocrText,
+            ingredients: [],
+            smiles: [],
+            insights: 'Chemical analysis unavailable - raw OCR text extracted'
+          };
         }
-        setOcrProgress(85);
-      }
-      
-      // Combine results from all methods
-      const finalResult = visionResult || textAnalysisResult || {
-        ingredients: [],
-        smiles: [],
-        formulas: [],
-        insights: ocrText || 'No text detected',
-        confidence: 'low'
-      };
-      
-      const ingredients = finalResult.ingredients || [];
-      const smilesStrings = finalResult.smiles || [];
-      const formulas = finalResult.formulas || [];
-      const primaryIngredient = finalResult.primary_ingredient || '';
-      const quantities = finalResult.quantities || [];
-      
-      // Store the first valid SMILES if found
-      if (smilesStrings.length > 0) {
-        setExtractedSmiles(smilesStrings[0]);
-      }
-      
-      // Build comprehensive result display
-      const resultText = `
-🔬 AI-Powered Analysis Report
+        
+        // Step 3: Use the analysis result
+        const finalResult = textAnalysisResult || {
+          ingredients: [],
+          smiles: [],
+          formulas: [],
+          insights: ocrText || 'No text detected',
+          confidence: 'low',
+          raw_text: ocrText
+        };
+        
+        const ingredients = finalResult.ingredients || [];
+        const smilesStrings = finalResult.smiles || [];
+        const formulas = finalResult.formulas || [];
+        const primaryIngredient = finalResult.primary_ingredient || '';
+        const quantities = finalResult.quantities || [];
+        const aiReport = finalResult.ai_report || finalResult.insights || '';
+        
+        // Store the first valid SMILES if found
+        if (smilesStrings.length > 0) {
+          setExtractedSmiles(smilesStrings[0]);
+        }
+        
+        // Build comprehensive result display
+        const resultText = `
+🔬 AI-Powered Chemical Analysis Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📊 Analysis Method: ${visionResult ? '🎯 Groq Vision API (Best)' : '📝 OCR + AI Analysis'}
+📊 Analysis Method: 🎯 Tesseract OCR + Groq LLM
 ✨ Confidence: ${finalResult.confidence?.toUpperCase()}
 
-${primaryIngredient ? `💊 PRIMARY INGREDIENT: ${primaryIngredient}\n\n` : ''}${ocrText ? `📝 Raw Text (excerpt):\n${ocrText.substring(0, 200)}...\n\n` : ''}
-🧪 Identified Ingredients:
-${ingredients.length > 0 ? ingredients.map((ing, i) => `${i + 1}. ${ing}`).join('\n') : 'No specific ingredients identified'}
+${primaryIngredient ? `💊 PRIMARY INGREDIENT: ${primaryIngredient}\n\n` : ''}📝 Raw OCR Text:
+${ocrText.substring(0, 300)}${ocrText.length > 300 ? '...' : ''}
 
-${quantities && quantities.length > 0 ? `📏 Quantities:\n${quantities.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\n` : ''}🔬 SMILES Representations:
+🧪 Identified Chemical Ingredients:
+${ingredients.length > 0 ? ingredients.map((ing, i) => `${i + 1}. ${ing}`).join('\n') : 'No specific chemical ingredients identified'}
+
+${quantities && quantities.length > 0 ? `📏 Quantities/Concentrations:\n${quantities.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\n` : ''}🔬 SMILES Representations:
 ${smilesStrings.length > 0 ? smilesStrings.map((s, i) => `${i + 1}. ${s}`).join('\n') : 'No SMILES strings extracted'}
 
-${formulas && formulas.length > 0 ? `⚗️ Chemical Formulas:\n${formulas.map((f, i) => `${i + 1}. ${f}`).join('\n')}\n\n` : ''}
-💡 AI Insights:
-${finalResult.insights || 'Analysis complete'}
+${formulas && formulas.length > 0 ? `⚗️ Chemical Formulas:\n${formulas.map((f, i) => `${i + 1}. ${f}`).join('\n')}\n\n` : ''}🤖 AI Chemical Analysis Report:
+${aiReport}
 
 ${smilesStrings.length > 0 ? '\n✅ Ready for toxicity prediction!' : '⚠️ No SMILES found - you can manually enter one below'}
-      `.trim();
+        `.trim();
+        
+        setExtractedText(resultText);
+      } else {
+        // No text extracted - show manual input option
+        const resultText = `
+🔬 AI-Powered Chemical Analysis Report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      setExtractedText(resultText);
+📊 Analysis Method: 🎯 Tesseract OCR + Groq LLM
+✨ Status: No text detected
+
+⚠️ No readable text found in the image.
+Please try with:
+• A clearer, higher resolution image
+• Better lighting conditions
+• Chemical structure diagrams
+• Medicine labels with visible text
+
+💡 Tips for better results:
+- Ensure text is clearly visible
+- Avoid blurry or low-contrast images
+- Chemical formulas should be legible
+
+📝 You can manually enter chemical information below.
+        `.trim();
+        
+        setExtractedText(resultText);
+      }
+
       setOcrProgress(100);
       setStep('predict');
       setIsProcessing(false);
 
     } catch (err) {
       console.error('Analysis Error:', err);
-      setError(`Analysis failed: ${err.message || 'Unknown error'}`);
-      setIsProcessing(false);
-      setOcrProgress(0);
       
       // Cleanup worker if it exists
       if (worker) {
@@ -264,6 +248,43 @@ ${smilesStrings.length > 0 ? '\n✅ Ready for toxicity prediction!' : '⚠️ No
           console.error('Error cleaning up worker:', cleanupErr);
         }
       }
+      
+      // Handle OCR-specific failures
+      if (err.message === 'OCR_FAILED' || err.message.includes('Aborted') || err.message.includes('WebAssembly') || err.message.includes('OCR')) {
+        console.log('OCR failed, enabling manual input mode');
+        setError('OCR engine unavailable. You can manually enter chemical information below.');
+        
+        // Show manual input interface
+        const fallbackText = `
+🔬 Manual Chemical Analysis Mode
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ Automatic OCR Unavailable
+The text recognition system could not process this image.
+
+📝 Manual Input Options:
+• Enter chemical names (e.g., "Paracetamol", "Aspirin")
+• Input SMILES notation directly
+• Type molecular formulas
+
+💡 Common Examples:
+• Paracetamol: CC(=O)Nc1ccc(O)cc1
+• Aspirin: CC(=O)Oc1ccccc1C(=O)O
+• Ibuprofen: CC(C)Cc1ccc(cc1)C(C)C(=O)O
+
+🎯 How to use:
+1. Enter your chemical data in the SMILES field below
+2. Click 'Predict Toxicity' for AI analysis
+        `.trim();
+        
+        setExtractedText(fallbackText);
+        setStep('predict');
+      } else {
+        setError(`Analysis failed: ${err.message || 'Unknown error'}`);
+      }
+      
+      setIsProcessing(false);
+      setOcrProgress(0);
     }
   };
 
@@ -471,7 +492,7 @@ ${smilesStrings.length > 0 ? '\n✅ Ready for toxicity prediction!' : '⚠️ No
                     ) : (
                       <>
                         <PhotoIcon className="h-5 w-5 mr-2" />
-                        AI Vision Analysis + OCR
+                        Tesseract OCR + AI Analysis
                       </>
                     )}
                   </button>
