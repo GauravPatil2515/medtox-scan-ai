@@ -1,0 +1,15 @@
+# MediTox AI - Clean Requirements
+# Essential dependencies only
+
+# Core (required)
+numpy>=1.21.0
+pandas>=1.3.0
+
+# Image processing (recommended)
+Pillow>=8.3.0
+
+# OCR (optional)
+pytesseract>=0.3.8
+
+# Web requests (optional)
+requests>=2.25.0

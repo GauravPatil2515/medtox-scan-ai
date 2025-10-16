@@ -13,13 +13,15 @@ import {
   TrashIcon,
   ClockIcon as HistoryIcon,
   ChatBubbleLeftRightIcon,
-  SparklesIcon
+  SparklesIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { MolecularSearch, usePredictionHistory, useExport } from '../components/EnhancedMolecularTools';
 import MolecularVisualization from '../components/MolecularVisualization';
 import { useNotifications, usePredictionNotifications } from '../components/NotificationSystem';
 import AIChat from '../components/AIChat';
+import ImageAnalysis from '../components/ImageAnalysis';
 
 const EnhancedPredictions = () => {
   const [inputType, setInputType] = useState('smiles');
@@ -227,8 +229,59 @@ const EnhancedPredictions = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Input Section */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Input Method Selection Tabs */}
+          <div className="bg-white rounded-xl shadow-soft p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Input Method</h2>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <button
+                onClick={() => setInputType('smiles')}
+                className={clsx(
+                  'p-4 rounded-lg border-2 transition-all duration-200 text-center',
+                  inputType === 'smiles'
+                    ? 'border-pink-500 bg-pink-50 text-pink-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                )}
+              >
+                <DocumentTextIcon className="w-6 h-6 mb-2 mx-auto" />
+                <div className="font-medium">SMILES Input</div>
+                <div className="text-xs opacity-70 mt-1">Enter molecular notation</div>
+              </button>
+              <button
+                onClick={() => setInputType('image')}
+                className={clsx(
+                  'p-4 rounded-lg border-2 transition-all duration-200 text-center',
+                  inputType === 'image'
+                    ? 'border-pink-500 bg-pink-50 text-pink-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                )}
+              >
+                <PhotoIcon className="w-6 h-6 mb-2 mx-auto" />
+                <div className="font-medium">Image Analysis</div>
+                <div className="text-xs opacity-70 mt-1">Upload image with OCR</div>
+              </button>
+              <button
+                onClick={() => setInputType('database')}
+                className={clsx(
+                  'p-4 rounded-lg border-2 transition-all duration-200 text-center',
+                  inputType === 'database'
+                    ? 'border-pink-500 bg-pink-50 text-pink-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                )}
+              >
+                <BeakerIcon className="w-6 h-6 mb-2 mx-auto" />
+                <div className="font-medium">Database Search</div>
+                <div className="text-xs opacity-70 mt-1">Browse 40+ molecules</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Image Analysis Section */}
+          {inputType === 'image' && (
+            <ImageAnalysis />
+          )}
+
           {/* Molecular Search Database */}
-          {showMolecularSearch && (
+          {inputType === 'database' && showMolecularSearch && (
             <div className="bg-white rounded-xl shadow-soft p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Molecular Database Search</h2>
@@ -247,6 +300,7 @@ const EnhancedPredictions = () => {
           )}
 
           {/* SMILES Input & Visualization */}
+          {inputType === 'smiles' && (
           <div className="bg-white rounded-xl shadow-soft p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">SMILES Input & Molecular Structure</h2>
             
@@ -390,9 +444,10 @@ const EnhancedPredictions = () => {
               </button>
             </form>
           </div>
+          )}
 
           {/* Results Section */}
-          {results && (
+          {inputType === 'smiles' && results && (
             <div className="bg-white rounded-xl shadow-soft p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Prediction Results</h2>
               

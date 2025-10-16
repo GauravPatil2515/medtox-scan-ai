@@ -16,28 +16,67 @@ const Analytics = () => {
     averageAccuracy: 0
   });
 
+  const [endpoints, setEndpoints] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Load analytics data from localStorage or API
-    const savedStats = localStorage.getItem('drugtox_analytics');
-    if (savedStats) {
-      setStats(JSON.parse(savedStats));
-    }
+    const fetchAnalyticsData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-    const savedActivity = localStorage.getItem('drugtox_activity');
-    if (savedActivity) {
-      setRecentActivity(JSON.parse(savedActivity));
-    }
+        // Fetch analytics data from API
+        const response = await fetch('http://localhost:5000/api/analytics');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update stats from overview
+        if (data.overview) {
+          setStats({
+            totalPredictions: data.overview.total_predictions || 0,
+            toxicCompounds: data.overview.toxic_compounds || 0,
+            safeCompounds: data.overview.safe_compounds || 0,
+            averageAccuracy: data.overview.average_accuracy || 0
+          });
+        }
+
+        // Update endpoints from endpoint_performance
+        if (data.endpoint_performance && Array.isArray(data.endpoint_performance)) {
+          const formattedEndpoints = data.endpoint_performance.map(ep => ({
+            id: ep.endpoint,
+            name: ep.endpoint.replace('NR-', 'Nuclear Receptor - ').replace('SR-', 'Stress Response - '),
+            accuracy: ep.accuracy,
+            predictions: ep.predictions
+          }));
+          setEndpoints(formattedEndpoints);
+        }
+
+        // Update recent activity
+        if (data.recent_activity && Array.isArray(data.recent_activity)) {
+          setRecentActivity(data.recent_activity);
+        }
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching analytics:', err);
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+    
+    // Refresh data every 30 seconds
+    const interval = setInterval(fetchAnalyticsData, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
-
-  const endpoints = [
-    { id: 'NR-AR-LBD', name: 'Androgen Receptor', accuracy: 83.9, predictions: 45 },
-    { id: 'NR-AhR', name: 'Aryl Hydrocarbon Receptor', accuracy: 83.4, predictions: 38 },
-    { id: 'SR-MMP', name: 'Mitochondrial Membrane', accuracy: 80.8, predictions: 42 },
-    { id: 'NR-ER-LBD', name: 'Estrogen Receptor', accuracy: 77.6, predictions: 35 },
-    { id: 'NR-AR', name: 'Androgen Receptor (Alt)', accuracy: 75.2, predictions: 33 }
-  ];
 
   return (
     <div className="space-y-6">
@@ -49,8 +88,37 @@ const Analytics = () => {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <span className="ml-3 text-gray-600">Loading analytics...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+            <p className="ml-3 text-red-800">
+              Failed to load analytics: {error}
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Content - Only show when not loading and no error */}
+      {!isLoading && !error && (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-xl shadow-soft p-6 border border-gray-200">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -183,10 +251,10 @@ const Analytics = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      Predicted toxicity for {activity.compound}
+                      Predicted toxicity for {activity.smiles || activity.compound}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {activity.result} • {activity.timestamp}
+                      {activity.result || 'Completed'} • {new Date(activity.created_at || activity.timestamp).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -195,6 +263,8 @@ const Analytics = () => {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

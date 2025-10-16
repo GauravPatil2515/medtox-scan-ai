@@ -10,12 +10,14 @@ import {
   EyeIcon,
   ChartBarIcon,
   ArrowDownTrayIcon,
-  TrashIcon
+  TrashIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { MolecularSearch, usePredictionHistory, useExport } from '../components/EnhancedMolecularTools';
 import MolecularVisualization from '../components/MolecularVisualization';
 import { useNotifications, usePredictionNotifications } from '../components/NotificationSystem';
+import ImageAnalysis from '../components/ImageAnalysis';
 
 const Predictions = () => {
   const [inputType, setInputType] = useState('smiles');
@@ -241,7 +243,7 @@ const Predictions = () => {
           {/* Input Type Selection */}
           <div className="bg-white rounded-xl shadow-soft p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Input Method</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <button
                 onClick={() => setInputType('smiles')}
                 className={clsx(
@@ -254,6 +256,19 @@ const Predictions = () => {
                 <DocumentTextIcon className="w-6 h-6 mb-2" />
                 <div className="font-medium">SMILES String</div>
                 <div className="text-sm opacity-70">Enter molecular structure</div>
+              </button>
+              <button
+                onClick={() => setInputType('image')}
+                className={clsx(
+                  'p-4 rounded-lg border-2 transition-all duration-200 text-left',
+                  inputType === 'image'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                )}
+              >
+                <PhotoIcon className="w-6 h-6 mb-2" />
+                <div className="font-medium">Image Analysis</div>
+                <div className="text-sm opacity-70">Upload image with OCR</div>
               </button>
               <button
                 onClick={() => setInputType('file')}
@@ -272,8 +287,11 @@ const Predictions = () => {
           </div>
 
           {/* Input Area */}
-          <div className="bg-white rounded-xl shadow-soft p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Molecular Input</h2>
+          {inputType === 'image' ? (
+            <ImageAnalysis />
+          ) : (
+            <div className="bg-white rounded-xl shadow-soft p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Molecular Input</h2>
             
             {inputType === 'smiles' ? (
               <div className="space-y-4">
@@ -327,8 +345,11 @@ const Predictions = () => {
               </div>
             )}
           </div>
+          )}
 
-          {/* Endpoint Selection */}
+          {/* Endpoint Selection - Only show for non-image input */}
+          {inputType !== 'image' && (
+            <>
           <div className="bg-white rounded-xl shadow-soft p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Toxicity Endpoints</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -382,6 +403,8 @@ const Predictions = () => {
               )}
             </button>
           </div>
+            </>
+          )}
         </div>
 
         {/* Results Section */}
