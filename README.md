@@ -1,8 +1,8 @@
-# 🧪 MedTox-Scan-AI Platform
+# 🧪 MedTox-AI Platform
 
-> **Advanced AI-powered drug toxicity prediction platform with molecular visualization and intelligent ChemBio assistant**
+> **AI-powered molecular toxicity prediction system with OCR image analysis and intelligent chemical safety assessment**
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![React](https://img.shields.io/badge/react-18.0+-61dafb.svg)
@@ -62,71 +62,83 @@ npm start
 
 ## 🌟 Features
 
-### 💊 Toxicity Prediction
-- **5 Toxicity Endpoints**: NR-AR-LBD, NR-AhR, SR-MMP, NR-ER-LBD, NR-AR
-- **SMILES-based Input**: Enter molecular structures as SMILES strings
-- **Real-time Analysis**: Instant predictions with confidence scores
-- **ML Models**: Optimized Random Forest and Gradient Boosting ensembles
+### � Core Capabilities
+- **Image Analysis**: Upload medicine images → OCR text extraction → AI ingredient analysis
+- **5 Toxicity Endpoints**: NR-AR, NR-AR-LBD, NR-AhR, NR-ER-LBD, SR-MMP
+- **SMILES Input**: Direct molecular structure input for toxicity prediction
+- **AI Integration**: Groq LLaMA3 for intelligent analysis and explanations
+- **Real-time Predictions**: Instant results with confidence scoring
 
-### 🤖 AI-Powered ChemBio Assistant
-- **Groq LLaMA3 Integration**: Advanced AI responses
-- **Comprehensive Knowledge Base**: 30+ chemistry and biology topics
-- **Fallback System**: Reliable responses even when AI service is unavailable
-- **Scientific Accuracy**: Detailed explanations of drug mechanisms and toxicity
-
-### 🔬 Advanced Features
-- **Molecular Visualization**: Canvas-based 2D structure rendering
-- **Prediction History**: Local storage with export capabilities
-- **Analytics Dashboard**: Usage statistics and trends
-- **Export Functionality**: CSV/JSON data export
-- **Progressive Web App**: Installable on any device
+### 🤖 Advanced Features
+- **OCR Technology**: Tesseract.js for medicine label text extraction
+- **Machine Learning**: Random Forest models (79.3% average accuracy)
+- **Database Integration**: Supabase for prediction history
+- **Responsive UI**: Modern React interface with Tailwind CSS
+- **Export Options**: JSON/CSV data export capabilities
 
 ## 📁 Project Structure
 
 ```
-MedTox-Scan-AI/
+medtox-scan-ai/
 ├── backend/                    # Flask API server
-│   ├── app.py                 # Main application
+│   ├── app.py                 # Main Flask application
 │   ├── requirements.txt       # Python dependencies
 │   ├── models/
-│   │   ├── simple_predictor.py    # ML predictor
-│   │   ├── database.py            # Database models
-│   │   └── best_optimized_models.pkl  # Trained models
+│   │   ├── simple_predictor.py        # ML prediction engine
+│   │   ├── best_optimized_models.pkl  # Trained ML models
+│   │   └── database.py                # Database models
 │   └── config/
-│       ├── groq.py            # AI client configuration
+│       ├── groq.py            # Groq AI configuration
 │       └── supabase.py        # Database configuration
 ├── frontend/                  # React application
-│   ├── package.json          # Node dependencies
 │   ├── src/
-│   │   ├── components/       # React components
-│   │   │   ├── ChemBioBot.jsx    # AI assistant
-│   │   │   ├── MolecularVisualization.jsx
-│   │   │   └── ...
-│   │   └── pages/           # Application pages
-│   └── public/              # Static assets
+│   │   ├── components/        # React components
+│   │   │   ├── ImageAnalysis.jsx      # Main OCR + AI feature
+│   │   │   ├── AIChat.jsx             # AI chatbot
+│   │   │   └── Layout/                # Layout components
+│   │   └── pages/             # Application pages
+│   │       ├── Predictions.jsx        # SMILES prediction
+│   │       ├── Dashboard.jsx          # Analytics dashboard
+│   │       └── Home.jsx               # Landing page
+│   └── public/                # Static assets
 ├── database/
-│   └── schema.sql           # Database schema
-├── START_PLATFORM.bat       # Windows startup script
+│   └── schema.sql             # Database schema
+├── docs/                      # Documentation
+│   ├── COMPLETE_PROJECT_REPORT.md     # Technical documentation
+│   └── ROADMAP.md                     # Development roadmap
+├── START_PLATFORM.bat         # Windows startup script
 └── README.md
 ```
 
-## 🧪 Features
-- **5 Toxicity Endpoints**: NR-AR-LBD, NR-AhR, SR-MMP, NR-ER-LBD, NR-AR
-- **Real-time Predictions**: Instant SMILES-based toxicity analysis
-- **Clean Architecture**: Separated frontend and backend
-- **Responsive UI**: Modern React interface with Tailwind CSS
-- **Production Ready**: Optimized models and error handling
-
 ## 🔬 API Endpoints
-- `GET /`: Health check
-- `POST /predict`: Single compound prediction
-- `GET /health`: System status
+- `GET /api/health` - Health check and status
+- `POST /api/predict` - Single molecule toxicity prediction
+- `POST /api/analyze-image-text` - OCR text analysis
+- `POST /api/analyze-image-vision` - AI vision analysis
+- `POST /api/predict/batch` - Batch prediction
+- `GET /api/endpoints` - Available toxicity endpoints
 
 ## 💡 Usage
-1. Start both backend and frontend servers
-2. Navigate to `http://localhost:3000`
-3. Enter SMILES strings for toxicity prediction
-4. View results across 5 toxicity endpoints
+
+### Image Analysis (Primary Feature)
+1. Navigate to "Image Analysis" page
+2. Upload medicine label image
+3. View OCR text extraction
+4. Get AI ingredient analysis
+5. Predict toxicity for extracted compounds
+
+### Direct SMILES Prediction
+1. Go to "Predictions" page
+2. Enter SMILES string (e.g., `CCO` for ethanol)
+3. Click "Predict Toxicity"
+4. View results across 5 endpoints
 
 ## 📊 Model Performance
-The platform uses optimized Random Forest models trained on comprehensive toxicity datasets with high accuracy across all endpoints.
+- **Average ROC-AUC**: 0.793 across all endpoints
+- **Best Endpoint**: NR-AR-LBD (0.839 ROC-AUC)
+- **Models**: Random Forest classifiers
+- **Features**: 50 molecular descriptors per compound
+
+## 📚 Documentation
+- Complete technical documentation: [`docs/COMPLETE_PROJECT_REPORT.md`](docs/COMPLETE_PROJECT_REPORT.md)
+- Development roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md)
