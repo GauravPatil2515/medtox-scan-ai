@@ -21,7 +21,7 @@ class GroqConfig:
     
     def __init__(self):
         # Groq API configuration
-        self.api_key = os.getenv('GROQ_API_KEY', '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')
+        self.api_key = os.getenv('GROQ_API_KEY', 'your-groq-api-key-here')
         self.default_model = "llama-3.3-70b-versatile"  # Correct Groq model
         self.vision_model = "llama-3.2-90b-vision-preview"  # Vision model
         
