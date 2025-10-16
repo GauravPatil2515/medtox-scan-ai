@@ -6,6 +6,7 @@ from groq import Groq
 from typing import Optional, Dict, Any, List
 import logging
 import json
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -21,7 +22,8 @@ class GroqConfig:
     def __init__(self):
         # Groq API configuration
         self.api_key = os.getenv('GROQ_API_KEY', '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')
-        self.default_model = "llama3-8b-8192"  # Use available Groq model
+        self.default_model = "llama-3.3-70b-versatile"  # Correct Groq model
+        self.vision_model = "llama-3.2-90b-vision-preview"  # Vision model
         
         # Initialize client
         self._client: Optional[Groq] = None
@@ -31,25 +33,12 @@ class GroqConfig:
         """Get or create Groq client"""
         if self._client is None:
             try:
-                # Direct initialization with API key
+                # Direct initialization with API key only - clean initialization
                 self._client = Groq(api_key=self.api_key)
                 logger.info("Groq client initialized successfully")
-            except TypeError as e:
-                # Handle version compatibility issues
-                logger.warning(f"Groq client initialization failed with TypeError: {e}")
-                try:
-                    # Try without extra parameters
-                    os.environ['GROQ_API_KEY'] = self.api_key
-                    from groq import Client
-                    self._client = Client()
-                    logger.info("Groq client initialized with alternative method")
-                except Exception as e2:
-                    logger.error(f"Alternative Groq initialization failed: {e2}")
-                    # Use fallback response mechanism
-                    self._client = None
-                    raise e
             except Exception as e:
                 logger.error(f"Failed to initialize Groq client: {e}")
+                # Create a mock client for fallback
                 self._client = None
                 raise e
         return self._client
@@ -65,13 +54,21 @@ class GroqConfig:
         try:
             if self._client is None:
                 # Try to initialize client
-                self.client
+                client = self.client
+            else:
+                client = self._client
             
-            response = self.client.chat.completions.create(
+            if client is None:
+                raise Exception("Groq client not available")
+            
+            response = client.chat.completions.create(
                 model=model or self.default_model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,  # Standard parameter name
+                top_p=1,
+                stream=False,
+                stop=None
             )
             
             return response.choices[0].message.content
@@ -151,9 +148,16 @@ Could you rephrase your question or ask about a specific aspect?"""
         # Prepare context for AI analysis
         results_summary = []
         for endpoint, data in toxicity_results.items():
+            prob = data.get('probability', 0)
+            if isinstance(prob, (int, float)):
+                prob_str = f"{prob:.2f}"
+            else:
+                prob_str = str(prob)
+            
+            conf = data.get('confidence', 'Unknown')
             results_summary.append(f"- {endpoint}: {data.get('prediction', 'Unknown')} "
-                                 f"(Probability: {data.get('probability', 0):.2f}, "
-                                 f"Confidence: {data.get('confidence', 0):.2f})")
+                                 f"(Probability: {prob_str}, "
+                                 f"Confidence: {conf})")
         
         messages = [
             {
@@ -252,6 +256,114 @@ Could you rephrase your question or ask about a specific aspect?"""
         ]
         
         return self.chat_completion(messages, temperature=0.4)
+
+    def analyze_image_vision(self, image_base64: str, image_name: str = "image") -> Dict[str, Any]:
+        """
+        Analyze medicine image using Groq Vision API with new model
+        
+        Args:
+            image_base64: Base64 encoded image
+            image_name: Name of the image file
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        try:
+            if self._client is None:
+                client = self.client
+            else:
+                client = self._client
+                
+            if client is None:
+                raise Exception("Groq client not available")
+            
+            # Create image URL from base64
+            image_url = f"data:image/jpeg;base64,{image_base64}"
+            
+            completion = client.chat.completions.create(
+                model=self.vision_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": """Analyze this medicine label image and extract the following information in JSON format:
+                                {
+                                  "primary_ingredient": "main active ingredient",
+                                  "ingredients": ["list of all ingredients"],
+                                  "smiles": ["SMILES notation if identifiable"],
+                                  "formulas": ["chemical formulas"],
+                                  "quantities": ["dosages and amounts"],
+                                  "insights": "additional observations",
+                                  "confidence": "high/medium/low"
+                                }
+                                Focus on active pharmaceutical ingredients and ignore excipients like colors, preservatives, etc."""
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": image_url
+                                }
+                            }
+                        ]
+                    }
+                ],
+                temperature=1,
+                max_tokens=1024,
+                top_p=1,
+                stream=False,
+                stop=None
+            )
+            
+            # Parse response
+            response_text = completion.choices[0].message.content
+            
+            # Try to extract JSON from response
+            try:
+                import re
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    analysis_data = json.loads(json_match.group())
+                else:
+                    # Fallback parsing
+                    analysis_data = {
+                        "primary_ingredient": "Unable to identify",
+                        "ingredients": ["Text extraction needed"],
+                        "smiles": [],
+                        "formulas": [],
+                        "quantities": [],
+                        "insights": response_text,
+                        "confidence": "low"
+                    }
+            except json.JSONDecodeError:
+                analysis_data = {
+                    "primary_ingredient": "Parsing error",
+                    "ingredients": [],
+                    "smiles": [],
+                    "formulas": [],
+                    "quantities": [],
+                    "insights": response_text,
+                    "confidence": "low"
+                }
+            
+            return {
+                "success": True,
+                "image_name": image_name,
+                "analysis": analysis_data,
+                "raw_response": response_text,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Vision analysis failed: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "image_name": image_name,
+                "fallback_message": "Vision analysis unavailable, please use OCR text extraction instead.",
+                "timestamp": datetime.now().isoformat()
+            }
 
 # Global instance
 groq_config = GroqConfig()

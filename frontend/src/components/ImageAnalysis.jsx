@@ -102,50 +102,88 @@ const ImageAnalysis = () => {
         console.log('Vision API failed, using OCR fallback:', visionError);
       }
       
-      // Method 2: Traditional OCR with Tesseract (always run as backup/supplement)
-      let ocrText = '';
-      if (!visionResult || visionResult.confidence === 'low') {
-        setOcrProgress(visionResult ? 65 : 30);
-        
-        console.log('Running OCR extraction...');
-        
-        // Convert blob URL to image element
-        const img = new Image();
-        img.src = imagePreview;
-        
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        
-        setOcrProgress(visionResult ? 70 : 40);
-        
-        // Create Tesseract worker (v6 API - correct usage)
-        console.log('Creating Tesseract worker...');
-        worker = await createWorker('eng');
-        
-        setOcrProgress(visionResult ? 75 : 50);
-        
-        // Perform OCR - use the blob URL directly or file
-        console.log('Recognizing text from image...');
-        try {
-          const { data: { text } } = await worker.recognize(image);
-          ocrText = text.trim();
-          console.log('OCR Complete, text extracted:', ocrText.substring(0, 100));
-        } catch (recognizeError) {
-          console.log('Recognition error, trying with preview URL:', recognizeError);
-          // Fallback to preview URL if file doesn't work
-          const { data: { text } } = await worker.recognize(imagePreview);
-          ocrText = text.trim();
-        }
-        
-        await worker.terminate();
-        worker = null;
-        
-        setOcrProgress(visionResult ? 85 : 75);
-      }
-      
-      // Method 3: AI Analysis of OCR text (if we have OCR text and no vision result)
+        // Method 2: Enhanced OCR with preprocessing (always run as backup/supplement)
+        let ocrText = '';
+        if (!visionResult || visionResult.confidence === 'low') {
+          setOcrProgress(visionResult ? 65 : 30);
+          
+          console.log('Running enhanced OCR extraction...');
+          
+          // Convert blob URL to image element
+          const img = new Image();
+          img.src = imagePreview;
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          
+          setOcrProgress(visionResult ? 70 : 40);
+          
+          // Create Tesseract worker with enhanced settings
+          console.log('Creating Tesseract worker with enhanced settings...');
+          worker = await createWorker('eng');
+          await worker.loadLanguage('eng');
+          await worker.initialize('eng');
+          
+          // Configure for better medicine label recognition
+          await worker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,()-/% ',
+            tessedit_pageseg_mode: '6', // Uniform block of text
+            tessedit_ocr_engine_mode: '1' // Neural nets LSTM only
+          });
+          
+          setOcrProgress(visionResult ? 75 : 50);
+          
+          // Perform OCR with multiple attempts for better accuracy
+          console.log('Recognizing text from image...');
+          try {
+            // First attempt with original file
+            const { data: { text, confidence } } = await worker.recognize(image);
+            ocrText = text.trim();
+            console.log(`OCR Complete, confidence: ${confidence}%, text extracted:`, ocrText.substring(0, 100));
+            
+            // If confidence is low, try image preprocessing
+            if (confidence < 70) {
+              console.log('Low confidence, trying image preprocessing...');
+              
+              // Create canvas for image preprocessing
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              
+              // Apply contrast enhancement
+              ctx.filter = 'contrast(150%) brightness(110%)';
+              ctx.drawImage(img, 0, 0);
+              
+              // Try OCR on enhanced image
+              const { data: { text: enhancedText, confidence: enhancedConfidence } } = await worker.recognize(canvas);
+              
+              if (enhancedConfidence > confidence) {
+                ocrText = enhancedText.trim();
+                console.log(`Enhanced OCR better, confidence: ${enhancedConfidence}%`);
+              }
+            }
+            
+          } catch (recognizeError) {
+            console.log('Recognition error with file, trying alternative methods:', recognizeError);
+            try {
+              // Fallback to preview URL
+              const { data: { text } } = await worker.recognize(imagePreview);
+              ocrText = text.trim();
+              console.log('OCR Complete with preview URL, text extracted:', ocrText.substring(0, 100));
+            } catch (previewError) {
+              console.log('All OCR methods failed:', previewError);
+              throw new Error('OCR recognition failed with all methods');
+            }
+          }
+          
+          await worker.terminate();
+          worker = null;
+          
+          setOcrProgress(visionResult ? 85 : 75);
+        }      // Method 3: AI Analysis of OCR text (if we have OCR text and no vision result)
       let textAnalysisResult = null;
       if (ocrText && !visionResult) {
         console.log('Analyzing OCR text with AI...');

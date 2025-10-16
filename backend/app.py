@@ -278,7 +278,7 @@ Respond in JSON format:
         try:
             # Try Groq Vision API (llama-3.2-90b-vision-preview)
             response = groq_client.client.chat.completions.create(
-                model="llama-3.2-90b-vision-preview",
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
                 messages=[
                     {
                         "role": "user",
@@ -372,47 +372,67 @@ def analyze_image_text():
             'amoxicillin': 'CC1(C)SC2C(NC(=O)C(N)c3ccc(O)cc3)C(=O)N2C1C(=O)O'
         }
         
-        # Enhanced AI prompt for better ingredient extraction
-        ai_prompt = f"""You are a pharmaceutical chemistry expert. Analyze this medicine label OCR text and identify the ACTIVE PHARMACEUTICAL INGREDIENT(S).
+        # Enhanced AI prompt for handling OCR errors and extracting chemical information
+        ai_prompt = f"""You are an expert pharmaceutical AI that specializes in extracting chemical information from noisy OCR text. The text below was extracted from a medicine label using OCR and contains many spelling errors and formatting issues.
 
-EXTRACTED TEXT FROM MEDICINE LABEL:
+NOISY OCR TEXT FROM MEDICINE LABEL:
 {extracted_text}
 
-CRITICAL INSTRUCTIONS:
-1. Look for drug names mentioned in the text (common names like Paracetamol, Aspirin, Ibuprofen, Cetirizine, etc.)
-2. Ignore excipients, colors (like Sunset Yellow, Erythrosine), and inactive ingredients
-3. Extract the PRIMARY ACTIVE INGREDIENT - the main drug that treats the condition
-4. Provide the correct SMILES notation for identified drugs
-5. Handle OCR errors (e.g., "Faracetamol" = "Paracetamol", "Paracetaol" = "Paracetamol")
+YOUR MISSION: Extract meaningful chemical/pharmaceutical information despite OCR errors.
 
-COMMON DRUG SMILES FOR REFERENCE:
+CRITICAL SKILLS NEEDED:
+1. **OCR ERROR CORRECTION**: Fix common OCR mistakes
+   - "Paracetamol" may appear as: "Faracetamol", "Paracetaol", "Para cetamol", "P aracetamol"
+   - "Ibuprofen" may appear as: "lbuprofen", "Ibu profen", "lbuprofan"
+   - "Aspirin" may appear as: "Asp irin", "Asplrin", "A spirin"
+   - "Diphenhydramine" may appear as: "Diphenhydram ine", "Diph enhydramine"
+   - Numbers/dosages: "500mg" may appear as "S00mg", "5O0mg", "500 mg"
+
+2. **ACTIVE INGREDIENT DETECTION**: Look for pharmaceutical terms even with errors:
+   - Active ingredient sections
+   - Drug names (even misspelled)
+   - Chemical names or brand names
+   - Ignore: colors, preservatives, excipients, inactive ingredients
+
+3. **QUANTITY EXTRACTION**: Find dosage amounts:
+   - mg, g, mcg, IU, mL patterns
+   - Even with OCR errors like "S00mg" = "500mg"
+
+4. **SMART CHEMICAL MATCHING**: Use fuzzy matching for common drugs:
+
+DRUG DATABASE WITH SMILES:
 - Paracetamol/Acetaminophen: CC(=O)Nc1ccc(O)cc1
-- Aspirin: CC(=O)Oc1ccccc1C(=O)O
+- Aspirin: CC(=O)Oc1ccccc1C(=O)O  
 - Ibuprofen: CC(C)Cc1ccc(cc1)C(C)C(=O)O
 - Caffeine: CN1C=NC2=C1C(=O)N(C(=O)N2C)C
 - Diphenhydramine: CN(C)CCOC(c1ccccc1)c1ccccc1
 - Cetirizine: O=C(O)COCCN1CCN(CC1)C(c1ccccc1)c1ccc(Cl)cc1
+- Loratadine: CCOC(=O)N1CCC(CC1)C(c2ccc(Cl)cc2)c3ccccn3
+- Pseudoephedrine: CC(C)NC[C@@H](c1ccc(O)cc1)O
+- Dextromethorphan: CN1CC[C@]2(CCCN2)[C@@H]1[C@@H]3c4ccccc4CC[C@H]3O
 
-RESPOND IN STRICT JSON FORMAT (no markdown, no extra text):
+RESPONSE FORMAT (JSON only, no markdown):
 {{
-  "primary_ingredient": "standardized drug name",
-  "ingredients": ["main active ingredient(s) only, not excipients"],
-  "smiles": ["SMILES notation(s) for active ingredients"],
-  "formulas": ["molecular formula if present"],
-  "quantities": ["dosage amounts mentioned"],
-  "insights": "one sentence about the medicine",
-  "confidence": "high/medium/low"
+  "primary_ingredient": "corrected standardized drug name",
+  "ingredients": ["list of active ingredients found"],
+  "smiles": ["SMILES strings for identified drugs"],
+  "formulas": ["molecular formulas if determinable"],
+  "quantities": ["dosage amounts found"],
+  "insights": "brief analysis of what medicine this likely is",
+  "confidence": "high/medium/low",
+  "ocr_corrections": ["original_text -> corrected_text"]
 }}
 
-EXAMPLE - If you see "Paracetamol" or "Paracetaol" anywhere:
+EXAMPLE - OCR text "Drug Facts Active lngredient Faracetamol S00mg" should return:
 {{
   "primary_ingredient": "Paracetamol",
   "ingredients": ["Paracetamol"],
   "smiles": ["CC(=O)Nc1ccc(O)cc1"],
   "formulas": ["C8H9NO2"],
-  "quantities": ["325mg"],
-  "insights": "Paracetamol is an analgesic and antipyretic drug",
-  "confidence": "high"
+  "quantities": ["500mg"],
+  "insights": "Pain reliever and fever reducer containing acetaminophen",
+  "confidence": "high",
+  "ocr_corrections": ["Faracetamol -> Paracetamol", "S00mg -> 500mg"]
 }}"""
         
         # Call Groq AI with enhanced model
@@ -439,17 +459,39 @@ EXAMPLE - If you see "Paracetamol" or "Paracetaol" anywhere:
             print(f"⚠️ JSON parsing failed: {parse_error}")
             print(f"Raw AI response: {ai_response}")
             
-            # Fallback: Try to extract drug name from OCR text
+            # Enhanced fallback: Try to extract drug name from OCR text with error correction
             extracted_text_lower = extracted_text.lower()
             fallback_ingredient = None
             fallback_smiles = None
             
-            # Check for common drugs in the text
-            for drug, smiles in common_drugs.items():
-                if drug in extracted_text_lower:
-                    fallback_ingredient = drug.capitalize()
-                    fallback_smiles = smiles
+            # Enhanced OCR error patterns for common drugs
+            drug_patterns = {
+                'paracetamol': ['paracetamol', 'paracetaol', 'faracetamol', 'para cetamol', 'p aracetamol', 'acetaminophen'],
+                'ibuprofen': ['ibuprofen', 'ibu profen', 'lbuprofen', 'ibuprofan', 'lbuprofan'],
+                'aspirin': ['aspirin', 'asp irin', 'asplrin', 'a spirin'],
+                'caffeine': ['caffeine', 'caff eine', 'cafeine', 'coffeine'],
+                'diphenhydramine': ['diphenhydramine', 'diphenhydram ine', 'diph enhydramine', 'diphenhydram'],
+                'cetirizine': ['cetirizine', 'cetir izine', 'cetirzine'],
+                'amoxicillin': ['amoxicillin', 'amox icillin', 'amoxi cillin']
+            }
+            
+            # Check for drug patterns with OCR error tolerance
+            for drug, patterns in drug_patterns.items():
+                for pattern in patterns:
+                    if pattern in extracted_text_lower or any(part in extracted_text_lower for part in pattern.split()):
+                        fallback_ingredient = drug.capitalize()
+                        fallback_smiles = common_drugs.get(drug)
+                        break
+                if fallback_ingredient:
                     break
+            
+            # Also check original common_drugs for exact matches
+            if not fallback_ingredient:
+                for drug, smiles in common_drugs.items():
+                    if drug in extracted_text_lower:
+                        fallback_ingredient = drug.capitalize()
+                        fallback_smiles = smiles
+                        break
             
             result = {
                 'primary_ingredient': fallback_ingredient or '',
@@ -461,18 +503,44 @@ EXAMPLE - If you see "Paracetamol" or "Paracetaol" anywhere:
                 'confidence': 'medium' if fallback_ingredient else 'low'
             }
         
-        # Additional validation: ensure SMILES is present
+        # Enhanced validation: ensure SMILES is present with better error handling
         if not result.get('smiles') or len(result.get('smiles', [])) == 0:
-            # Try fallback detection
+            # Try enhanced fallback detection with OCR error patterns
             extracted_text_lower = extracted_text.lower()
-            for drug, smiles in common_drugs.items():
-                if drug in extracted_text_lower:
-                    result['primary_ingredient'] = drug.capitalize()
-                    result['ingredients'] = [drug.capitalize()]
-                    result['smiles'] = [smiles]
-                    result['confidence'] = 'high'
-                    result['insights'] = f"Detected {drug.capitalize()} via text matching"
+            
+            # Enhanced OCR error patterns
+            drug_patterns = {
+                'paracetamol': ['paracetamol', 'paracetaol', 'faracetamol', 'para cetamol', 'p aracetamol', 'acetaminophen'],
+                'ibuprofen': ['ibuprofen', 'ibu profen', 'lbuprofen', 'ibuprofan', 'lbuprofan'],
+                'aspirin': ['aspirin', 'asp irin', 'asplrin', 'a spirin'],
+                'caffeine': ['caffeine', 'caff eine', 'cafeine', 'coffeine'],
+                'diphenhydramine': ['diphenhydramine', 'diphenhydram ine', 'diph enhydramine', 'diphenhydram'],
+                'cetirizine': ['cetirizine', 'cetir izine', 'cetirzine'],
+                'amoxicillin': ['amoxicillin', 'amox icillin', 'amoxi cillin']
+            }
+            
+            for drug, patterns in drug_patterns.items():
+                for pattern in patterns:
+                    if pattern in extracted_text_lower:
+                        result['primary_ingredient'] = drug.capitalize()
+                        result['ingredients'] = [drug.capitalize()]
+                        result['smiles'] = [common_drugs.get(drug)]
+                        result['confidence'] = 'high'
+                        result['insights'] = f"Detected {drug.capitalize()} via enhanced pattern matching"
+                        break
+                if result.get('smiles'):
                     break
+            
+            # Final fallback to original method
+            if not result.get('smiles'):
+                for drug, smiles in common_drugs.items():
+                    if drug in extracted_text_lower:
+                        result['primary_ingredient'] = drug.capitalize()
+                        result['ingredients'] = [drug.capitalize()]
+                        result['smiles'] = [smiles]
+                        result['confidence'] = 'high'
+                        result['insights'] = f"Detected {drug.capitalize()} via text matching"
+                        break
         
         return jsonify({
             'success': True,

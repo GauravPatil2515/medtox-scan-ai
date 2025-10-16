@@ -6,13 +6,11 @@ import Dashboard from './pages/Dashboard';
 import Predictions from './pages/Predictions';
 import EnhancedPredictions from './pages/EnhancedPredictions';
 import BatchProcessing from './pages/BatchProcessing';
-import Analytics from './pages/Analytics';
 import { NotificationProvider } from './components/NotificationSystem';
 import { OnboardingTutorial, QuickHelp } from './components/OnboardingTutorial';
 import ChemBioBot from './components/ChemBioBot';
 
 // Placeholder components for pages not yet created
-const Results = () => <div className="text-2xl font-bold">Results</div>;
 const Settings = () => <div className="text-2xl font-bold">Settings</div>;
 const Help = () => <div className="text-2xl font-bold">Help & Documentation</div>;
 const Contact = () => <div className="text-2xl font-bold">Contact Support</div>;
@@ -28,8 +26,6 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="predictions" element={<EnhancedPredictions />} />
             <Route path="batch" element={<BatchProcessing />} />
-            <Route path="results" element={<Results />} />
-            <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />
             <Route path="help" element={<Help />} />
             <Route path="contact" element={<Contact />} />

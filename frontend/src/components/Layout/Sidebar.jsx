@@ -5,8 +5,6 @@ import {
   HomeIcon, 
   BeakerIcon, 
   DocumentDuplicateIcon,
-  ChartBarIcon,
-  ClipboardDocumentListIcon,
   CogIcon,
   XMarkIcon,
   QuestionMarkCircleIcon,
@@ -18,8 +16,6 @@ const navigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
   { name: 'Predictions', href: '/app/predictions', icon: BeakerIcon },
   { name: 'Batch Processing', href: '/app/batch', icon: DocumentDuplicateIcon },
-  { name: 'Results', href: '/app/results', icon: ClipboardDocumentListIcon },
-  { name: 'Analytics', href: '/app/analytics', icon: ChartBarIcon },
 ];
 
 const secondaryNavigation = [
