@@ -1,0 +1,5 @@
+# DrugTox-AI Dashboard - Main Requirements
+# This file is for reference. Use backend/requirements.txt for installation
+
+# See backend/requirements.txt for full dependency list
+-r backend/requirements.txt
