@@ -20,7 +20,7 @@ class GroqConfig:
     
     def __init__(self):
         # Groq API configuration
-        self.api_key = os.getenv('GROQ_API_KEY', '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')
+        self.api_key = os.getenv('GROQ_API_KEY', 'your-groq-api-key-here')
         self.default_model = "llama3-8b-8192"  # Use available Groq model
         
         # Initialize client

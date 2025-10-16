@@ -469,7 +469,7 @@ CREATE TABLE users (
 ### Backend Environment (.env)
 ```env
 # Groq AI API
-GROQ_API_KEY=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
+GROQ_API_KEY=your-groq-api-key-here
 
 # Supabase Database
 SUPABASE_URL=https://ifryersmyctokdkvysvx.supabase.co
