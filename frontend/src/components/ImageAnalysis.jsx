@@ -60,12 +60,8 @@ const ImageAnalysis = () => {
     try {
       setOcrProgress(10);
       
-      console.log('Starting Tesseract OCR + Groq AI analysis...');
-      
       // Step 1: Extract text using Tesseract OCR (Primary Method)
       setOcrProgress(20);
-      
-      console.log('Running Tesseract OCR extraction...');
       
       // Convert blob URL to image element
       const img = new Image();
@@ -79,12 +75,10 @@ const ImageAnalysis = () => {
       setOcrProgress(30);
       
       // Create Tesseract worker with proper v6 API
-      console.log('Initializing Tesseract OCR...');
       let ocrText = '';
       
       try {
         // Use Tesseract.recognize directly (recommended for v6)
-        console.log('Starting OCR recognition...');
         
         const { data: { text } } = await Tesseract.recognize(
           image,
@@ -104,19 +98,16 @@ const ImageAnalysis = () => {
         );
         
         ocrText = text.trim();
-        console.log('✅ OCR Complete! Text extracted:', ocrText.substring(0, 200));
         
       } catch (tesseractError) {
         console.error('Tesseract OCR failed:', tesseractError);
         
         // Fallback: Try with worker approach
         try {
-          console.log('Trying fallback worker approach...');
           worker = await Tesseract.createWorker('eng');
           
           const { data: { text } } = await worker.recognize(image);
           ocrText = text.trim();
-          console.log('✅ Fallback OCR successful:', ocrText.substring(0, 200));
           
           await worker.terminate();
           worker = null;
@@ -134,7 +125,6 @@ const ImageAnalysis = () => {
       // Step 2: Analyze OCR text with Groq LLM for chemical components
       let textAnalysisResult = null;
       if (ocrText && ocrText.length > 5) {
-        console.log('Analyzing OCR text with Groq AI for chemical components...');
         const textAnalysisResponse = await fetch('http://localhost:5000/api/analyze-chemical-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -148,9 +138,7 @@ const ImageAnalysis = () => {
 
         if (textAnalysisResponse.ok) {
           textAnalysisResult = await textAnalysisResponse.json();
-          console.log('✅ Chemical analysis successful:', textAnalysisResult);
         } else {
-          console.log('⚠️ Chemical analysis failed, using raw OCR text');
           textAnalysisResult = {
             success: false,
             raw_text: ocrText,
@@ -251,7 +239,6 @@ Please try with:
       
       // Handle OCR-specific failures
       if (err.message === 'OCR_FAILED' || err.message.includes('Aborted') || err.message.includes('WebAssembly') || err.message.includes('OCR')) {
-        console.log('OCR failed, enabling manual input mode');
         setError('OCR engine unavailable. You can manually enter chemical information below.');
         
         // Show manual input interface
@@ -309,8 +296,6 @@ The text recognition system could not process this image.
           smilesString = smilesMatch[1].trim();
         }
       }
-
-      console.log('Sending SMILES for prediction:', smilesString);
 
       const response = await fetch('http://localhost:5000/api/predict', {
         method: 'POST',

@@ -318,7 +318,7 @@ const Predictions = () => {
       let smilesForPrediction = inputValue.trim();
       
       if (inputType === 'natural-language' && naturalLanguageQuery.trim() && !inputValue.trim()) {
-        console.log('Processing natural language query first...');
+
         try {
           const nlResponse = await fetch('http://localhost:5000/api/natural-language-to-chemical', {
             method: 'POST',
@@ -334,7 +334,7 @@ const Predictions = () => {
               smilesForPrediction = nlData.smiles;
               setInputValue(nlData.smiles);
               setSelectedMoleculeName(nlData.chemical_name);
-              console.log(`✅ Converted "${naturalLanguageQuery}" to ${nlData.chemical_name}: ${nlData.smiles}`);
+
             } else {
               throw new Error(`Could not find chemical for "${naturalLanguageQuery}"`);
             }
@@ -348,7 +348,7 @@ const Predictions = () => {
           return;
         }
       } else if (inputType === 'chemical-name' && chemicalName.trim() && !inputValue.trim()) {
-        console.log('Converting chemical name to SMILES first...');
+
         try {
           const nameResponse = await fetch('http://localhost:5000/api/chemical-name-to-smiles', {
             method: 'POST',
@@ -364,7 +364,7 @@ const Predictions = () => {
               smilesForPrediction = nameData.smiles;
               setInputValue(nameData.smiles);
               setSelectedMoleculeName(nameData.name);
-              console.log(`✅ Converted "${chemicalName}" to SMILES: ${nameData.smiles}`);
+
             } else {
               throw new Error(`Could not find SMILES for "${chemicalName}"`);
             }
@@ -398,12 +398,12 @@ const Predictions = () => {
         
         if (response.ok) {
           data = await response.json();
-          console.log('✅ API Response:', data);
+
         } else {
           throw new Error('API not available');
         }
       } catch (apiError) {
-        console.log('API not available, using demo data');
+
         // Intelligent demo data based on input
         const isEthanol = smilesForPrediction.toLowerCase() === 'cco';
         const isBenzene = smilesForPrediction.toLowerCase() === 'c1ccccc1';

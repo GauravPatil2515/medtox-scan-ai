@@ -122,7 +122,7 @@ const BatchProcessing = () => {
       window.URL.revokeObjectURL(url);
       
       setDownloadStatus('completed');
-      console.log('✅ Results downloaded successfully');
+
       
       // Reset status after 2 seconds
       setTimeout(() => setDownloadStatus('idle'), 2000);
@@ -156,7 +156,7 @@ const BatchProcessing = () => {
       // Navigate to analytics view or open in new tab
       window.open('/dashboard', '_blank');
       setAnalyticsStatus('completed');
-      console.log('✅ Opening analytics dashboard...');
+
       
       // Reset status after 2 seconds
       setTimeout(() => setAnalyticsStatus('idle'), 2000);
