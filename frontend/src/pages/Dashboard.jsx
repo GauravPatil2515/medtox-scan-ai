@@ -19,6 +19,19 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Endpoint mapping for proper display names
+  const endpointDisplayNames = {
+    'NR-AR-LBD': '🔴 Androgen Receptor LBD',
+    'NR-AhR': '🔬 Aryl Hydrocarbon Receptor',
+    'SR-MMP': '⚡ Mitochondrial Membrane Potential',
+    'NR-ER-LBD': '♀️ Estrogen Receptor LBD',
+    'NR-AR': '♂️ Androgen Receptor'
+  };
+
+  const getEndpointDisplayName = (endpointId) => {
+    return endpointDisplayNames[endpointId] || endpointId;
+  };
+
   // Fetch data from API on component mount
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -154,7 +167,7 @@ const Dashboard = () => {
           <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome to MedTox-Scan-AI!</h1>
+                <h1 className="text-3xl font-bold mb-2">Welcome to MedToXAi!</h1>
                 <p className="text-primary-100 text-lg">
                   Your molecular toxicity prediction platform is ready. 
                   Monitor predictions, analyze results, and discover insights.
@@ -273,7 +286,7 @@ const Dashboard = () => {
                                 <div key={endpoint} className="bg-gray-50 rounded-lg p-3">
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-gray-700">
-                                      {endpoint}
+                                      {getEndpointDisplayName(endpoint)}
                                     </span>
                                     <span className={clsx('inline-flex items-center px-2 py-1 rounded-full text-xs font-medium', getRiskColor(risk))}>
                                       {risk}

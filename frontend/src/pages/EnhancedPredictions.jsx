@@ -18,7 +18,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { MolecularSearch, usePredictionHistory, useExport } from '../components/EnhancedMolecularTools';
-import MolecularVisualization from '../components/MolecularVisualization';
 import { useNotifications, usePredictionNotifications } from '../components/NotificationSystem';
 import AIChat from '../components/AIChat';
 import ImageAnalysis from '../components/ImageAnalysis';
@@ -156,9 +155,9 @@ const EnhancedPredictions = () => {
     if (history.length === 0) return;
     
     if (format === 'csv') {
-      exportToCSV(history, `drugtox_history_${new Date().toISOString().split('T')[0]}.csv`);
+      exportToCSV(history, `medtoxai_history_${new Date().toISOString().split('T')[0]}.csv`);
     } else {
-      exportToJSON(history, `drugtox_history_${new Date().toISOString().split('T')[0]}.json`);
+      exportToJSON(history, `medtoxai_history_${new Date().toISOString().split('T')[0]}.json`);
     }
   };
 
@@ -367,16 +366,24 @@ const EnhancedPredictions = () => {
                   </div>
                 </div>
 
-                {/* Molecular Visualization */}
+                {/* Additional Input Information */}
                 <div className="space-y-4">
-                  <label className="text-sm font-medium text-gray-700">Molecular Structure</label>
+                  <label className="text-sm font-medium text-gray-700">Input Summary</label>
                   {inputValue ? (
-                    <MolecularVisualization smiles={inputValue} width={280} height={200} />
+                    <div className="w-full p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-center">
+                        <CheckCircleIcon className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <p className="text-sm font-medium text-green-800">SMILES Ready for Analysis</p>
+                        <p className="text-xs text-green-600 mt-1 font-mono break-all">{inputValue}</p>
+                        <p className="text-xs text-green-600 mt-2">Length: {inputValue.length} characters</p>
+                      </div>
+                    </div>
                   ) : (
                     <div className="w-full h-48 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center">
                       <div className="text-center">
                         <BeakerIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Enter SMILES to see structure</p>
+                        <p className="text-sm text-gray-500">Enter SMILES for toxicity analysis</p>
+                        <p className="text-xs text-gray-400 mt-1">Chemical structure will be processed automatically</p>
                       </div>
                     </div>
                   )}

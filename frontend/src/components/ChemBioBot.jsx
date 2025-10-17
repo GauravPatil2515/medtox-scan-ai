@@ -37,7 +37,7 @@ const ChemBioBot = () => {
       process: 'The process includes: 1) Preclinical testing (in vitro and animal studies), 2) Clinical trials (Phase I-III), 3) Regulatory review, 4) Post-market surveillance.',
       endpoints: 'Key safety endpoints include acute toxicity, chronic toxicity, carcinogenicity, reproductive toxicity, genotoxicity, and organ-specific toxicities.',
       regulations: 'Governed by FDA, EMA, and other regulatory agencies following ICH guidelines for safety assessment.',
-      technologies: 'Modern approaches include computational toxicology, organ-on-chip models, and AI-powered prediction platforms like DrugTox-AI.'
+      technologies: 'Modern approaches include computational toxicology, organ-on-chip models, and AI-powered prediction platforms like MedToXAi.'
     },
     'toxicity testing': {
       definition: 'Systematic evaluation of adverse effects caused by chemical exposure to living organisms.',
@@ -172,7 +172,7 @@ const ChemBioBot = () => {
 
       // Enhanced general topic responses
       if (lowerMessage.includes('drug safety') || lowerMessage.includes('pharmaceutical testing')) {
-        return `**Drug Safety Testing Overview** 🧪\n\nDrug safety testing is a comprehensive, multi-stage process:\n\n**1. Preclinical Testing:**\n• In vitro assays (cell-based)\n• Animal studies (toxicology)\n• ADME studies\n\n**2. Clinical Trials:**\n• Phase I: Safety in humans\n• Phase II: Efficacy studies\n• Phase III: Large-scale trials\n\n**3. Regulatory Review:**\n• FDA/EMA evaluation\n• Risk-benefit analysis\n\n**4. Post-Market Surveillance:**\n• Ongoing safety monitoring\n• Adverse event reporting\n\n**Modern Approaches:**\n• Computational toxicology\n• AI-powered prediction (like DrugTox-AI)\n• Organ-on-chip technologies\n• Alternative testing methods (3Rs principle)`;
+        return `**Drug Safety Testing Overview** 🧪\n\nDrug safety testing is a comprehensive, multi-stage process:\n\n**1. Preclinical Testing:**\n• In vitro assays (cell-based)\n• Animal studies (toxicology)\n• ADME studies\n\n**2. Clinical Trials:**\n• Phase I: Safety in humans\n• Phase II: Efficacy studies\n• Phase III: Large-scale trials\n\n**3. Regulatory Review:**\n• FDA/EMA evaluation\n• Risk-benefit analysis\n\n**4. Post-Market Surveillance:**\n• Ongoing safety monitoring\n• Adverse event reporting\n\n**Modern Approaches:**\n• Computational toxicology\n• AI-powered prediction (like MedToXAi)\n• Organ-on-chip technologies\n• Alternative testing methods (3Rs principle)`;
       }
 
       if (lowerMessage.includes('toxicity endpoint') || lowerMessage.includes('tox screen')) {
@@ -188,7 +188,7 @@ const ChemBioBot = () => {
       }
 
       if (lowerMessage.includes('computational') || lowerMessage.includes('ai') || lowerMessage.includes('prediction')) {
-        return `**Computational Chemistry & AI in Drug Discovery** 🤖\n\n**AI Applications:**\n• Toxicity prediction (like DrugTox-AI)\n• Drug-target interaction modeling\n• ADME property prediction\n• Lead optimization\n\n**Methods:**\n• Machine learning algorithms\n• Deep neural networks\n• QSAR modeling\n• Molecular dynamics simulations\n\n**Benefits:**\n• Faster screening\n• Reduced animal testing\n• Cost-effective development\n• Better success rates\n\n**Our Platform:** DrugTox-AI predicts toxicity across 5 key endpoints using advanced ML models trained on comprehensive datasets.`;
+        return `**Computational Chemistry & AI in Drug Discovery** 🤖\n\n**AI Applications:**\n• Toxicity prediction (like MedToXAi)\n• Drug-target interaction modeling\n• ADME property prediction\n• Lead optimization\n\n**Methods:**\n• Machine learning algorithms\n• Deep neural networks\n• QSAR modeling\n• Molecular dynamics simulations\n\n**Benefits:**\n• Faster screening\n• Reduced animal testing\n• Cost-effective development\n• Better success rates\n\n**Our Platform:** MedToXAi predicts toxicity across 5 key endpoints using advanced ML models trained on comprehensive datasets.`;
       }
 
       // Default enhanced response

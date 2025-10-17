@@ -1,8 +1,8 @@
-# MedTox-AI Platform - Complete Technical Report
+# MedToXAi Platform - Complete Technical Report
 ## AI-Powered Molecular Toxicity Analysis System
 
-**Project Name:** MedTox-AI / DrugTox-Scan-AI  
-**Repository:** medtox-scan-ai (GauravPatil2515)  
+**Project Name:** MedToXAi  
+**Repository:** medtoxai (GauravPatil2515)  
 **Date:** October 15, 2025  
 **Version:** 1.0.0  
 **Status:** ✅ Fully Functional
@@ -11,7 +11,7 @@
 
 ## 📋 Executive Summary
 
-MedTox-AI is a comprehensive web-based platform for predicting molecular toxicity using machine learning models. The system analyzes chemical compounds (medicines, drugs, chemicals) by processing their molecular structures (SMILES notation or medicine images) and predicts toxicity across multiple biological endpoints. It features OCR-based medicine label scanning, AI-powered ingredient extraction, and real-time toxicity predictions.
+MedToXAi is a comprehensive web-based platform for predicting molecular toxicity using machine learning models. The system analyzes chemical compounds (medicines, drugs, chemicals) by processing their molecular structures (SMILES notation or medicine images) and predicts toxicity across multiple biological endpoints. It features OCR-based medicine label scanning, AI-powered ingredient extraction, and real-time toxicity predictions.
 
 ### Key Capabilities:
 - ✅ Upload medicine images → Extract ingredients → Predict toxicity
@@ -111,7 +111,7 @@ backend/
 ├── app.py                      # Main Flask application (1062 lines)
 ├── models/
 │   ├── simple_predictor.py    # ML prediction engine
-│   ├── meditox_feature.py     # MediTox analysis features
+│   ├── meditox_feature.py     # MedToXAi analysis features
 │   ├── database.py            # Database models
 │   ├── best_optimized_models.pkl  # Trained ML models (5 endpoints)
 │   └── create_dummy_models.py # Model generation script
@@ -181,10 +181,10 @@ backend/
    → Explains toxicity endpoint in detail
    ```
 
-9. **MediTox Analysis** (if available)
+9. **MedToXAi Analysis** (if available)
    ```
-   POST /api/meditox/analyze
-   → Advanced MediTox feature analysis
+   POST /api/medtoxai/analyze
+   → Advanced MedToXAi feature analysis
    ```
 
 #### B. **ML Prediction Engine (simple_predictor.py)**
@@ -735,7 +735,7 @@ npm start
 
 **Project Status:** ✅ **FULLY FUNCTIONAL**
 
-MedTox-AI is a production-ready platform that successfully combines:
+MedToXAi is a production-ready platform that successfully combines:
 - ✅ Modern web technologies (React + Flask)
 - ✅ Machine learning (scikit-learn Random Forest)
 - ✅ AI integration (Groq LLM)

@@ -18,6 +18,8 @@ const BatchProcessing = () => {
   const [processingStatus, setProcessingStatus] = useState('idle'); // idle, running, paused, completed, error
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState(null);
+  const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, downloading, completed, error
+  const [analyticsStatus, setAnalyticsStatus] = useState('idle'); // idle, loading, completed, error
 
   const [jobQueue] = useState([
     {
@@ -83,6 +85,90 @@ const BatchProcessing = () => {
         return prev + Math.random() * 10;
       });
     }, 500);
+  };
+
+  const handleDownloadResults = async () => {
+    if (!results) {
+      alert('No results available to download. Please complete a batch processing job first.');
+      return;
+    }
+
+    setDownloadStatus('downloading');
+    
+    try {
+      // Download CSV file with results
+      const downloadUrl = 'http://localhost:5000/api/download/results?format=csv&limit=1000';
+      
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/csv',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Get the blob and create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `toxicity_results_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      setDownloadStatus('completed');
+      console.log('✅ Results downloaded successfully');
+      
+      // Reset status after 2 seconds
+      setTimeout(() => setDownloadStatus('idle'), 2000);
+      
+    } catch (error) {
+      console.error('❌ Download failed:', error);
+      setDownloadStatus('error');
+      alert(`Failed to download results: ${error.message}`);
+      
+      // Reset status after 3 seconds
+      setTimeout(() => setDownloadStatus('idle'), 3000);
+    }
+  };
+
+  const handleViewAnalytics = async () => {
+    setAnalyticsStatus('loading');
+    
+    try {
+      // Test if analytics endpoint is available
+      const response = await fetch('http://localhost:5000/api/analytics', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Analytics unavailable: ${response.status} ${response.statusText}`);
+      }
+
+      // Navigate to analytics view or open in new tab
+      window.open('/dashboard', '_blank');
+      setAnalyticsStatus('completed');
+      console.log('✅ Opening analytics dashboard...');
+      
+      // Reset status after 2 seconds
+      setTimeout(() => setAnalyticsStatus('idle'), 2000);
+      
+    } catch (error) {
+      console.error('❌ Failed to open analytics:', error);
+      setAnalyticsStatus('error');
+      alert(`Failed to open analytics: ${error.message}. Make sure the backend server is running.`);
+      
+      // Reset status after 3 seconds
+      setTimeout(() => setAnalyticsStatus('idle'), 3000);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -291,13 +377,65 @@ C1=CC=CC=C1,Benzene`}
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200">
-                  <DocumentArrowDownIcon className="w-4 h-4" />
-                  <span>Download Results</span>
+                <button 
+                  onClick={handleDownloadResults}
+                  disabled={downloadStatus === 'downloading'}
+                  className={clsx(
+                    'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200',
+                    downloadStatus === 'downloading' 
+                      ? 'bg-gray-400 cursor-not-allowed text-white'
+                      : downloadStatus === 'completed'
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : downloadStatus === 'error'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-primary-600 hover:bg-primary-700 text-white'
+                  )}
+                >
+                  {downloadStatus === 'downloading' ? (
+                    <ClockIcon className="w-4 h-4 animate-spin" />
+                  ) : downloadStatus === 'completed' ? (
+                    <CheckCircleIcon className="w-4 h-4" />
+                  ) : downloadStatus === 'error' ? (
+                    <ExclamationCircleIcon className="w-4 h-4" />
+                  ) : (
+                    <DocumentArrowDownIcon className="w-4 h-4" />
+                  )}
+                  <span>
+                    {downloadStatus === 'downloading' ? 'Downloading...' 
+                     : downloadStatus === 'completed' ? 'Downloaded!' 
+                     : downloadStatus === 'error' ? 'Failed' 
+                     : 'Download Results'}
+                  </span>
                 </button>
-                <button className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200">
-                  <ChartBarIcon className="w-4 h-4" />
-                  <span>View Analytics</span>
+                <button 
+                  onClick={handleViewAnalytics}
+                  disabled={analyticsStatus === 'loading'}
+                  className={clsx(
+                    'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200',
+                    analyticsStatus === 'loading' 
+                      ? 'bg-gray-400 cursor-not-allowed text-white'
+                      : analyticsStatus === 'completed'
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : analyticsStatus === 'error'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-gray-600 hover:bg-gray-700 text-white'
+                  )}
+                >
+                  {analyticsStatus === 'loading' ? (
+                    <ClockIcon className="w-4 h-4 animate-spin" />
+                  ) : analyticsStatus === 'completed' ? (
+                    <CheckCircleIcon className="w-4 h-4" />
+                  ) : analyticsStatus === 'error' ? (
+                    <ExclamationCircleIcon className="w-4 h-4" />
+                  ) : (
+                    <ChartBarIcon className="w-4 h-4" />
+                  )}
+                  <span>
+                    {analyticsStatus === 'loading' ? 'Loading...' 
+                     : analyticsStatus === 'completed' ? 'Opened!' 
+                     : analyticsStatus === 'error' ? 'Failed' 
+                     : 'View Analytics'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -380,6 +518,26 @@ C1=CC=CC=C1,Benzene`}
             </div>
           </div>
 
+          {/* Normal Behavior Guide */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+            <h3 className="font-medium text-green-900 mb-3">Normal Batch Processing Flow</h3>
+            <div className="text-sm text-green-700 space-y-2">
+              <div className="font-medium">📁 Step 1: File Upload</div>
+              <div className="ml-4">• Upload CSV/SDF files with SMILES strings</div>
+              <div className="ml-4">• System validates file format and content</div>
+              
+              <div className="font-medium mt-3">⚡ Step 2: Processing</div>
+              <div className="ml-4">• Molecules processed through 5 toxicity endpoints</div>
+              <div className="ml-4">• Real-time progress updates</div>
+              <div className="ml-4">• Automatic retry for failed molecules</div>
+              
+              <div className="font-medium mt-3">📊 Step 3: Results</div>
+              <div className="ml-4">• <strong>Download Results:</strong> Export as CSV/JSON</div>
+              <div className="ml-4">• <strong>View Analytics:</strong> Open dashboard with charts</div>
+              <div className="ml-4">• Results stored in database permanently</div>
+            </div>
+          </div>
+
           {/* Processing Tips */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
             <h3 className="font-medium text-blue-900 mb-3">Processing Tips</h3>
@@ -390,6 +548,28 @@ C1=CC=CC=C1,Benzene`}
               <li>• Processing can be paused/resumed</li>
               <li>• Check queue status regularly</li>
             </ul>
+          </div>
+
+          {/* Button Status Guide */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <h3 className="font-medium text-yellow-900 mb-3">Button Functions</h3>
+            <div className="text-sm text-yellow-700 space-y-2">
+              <div className="flex items-center space-x-2">
+                <DocumentArrowDownIcon className="w-4 h-4" />
+                <span><strong>Download Results:</strong></span>
+              </div>
+              <div className="ml-6">• Downloads processed results as CSV file</div>
+              <div className="ml-6">• Includes all 5 toxicity endpoint predictions</div>
+              <div className="ml-6">• Shows SMILES, predictions, probabilities</div>
+              
+              <div className="flex items-center space-x-2 mt-3">
+                <ChartBarIcon className="w-4 h-4" />
+                <span><strong>View Analytics:</strong></span>
+              </div>
+              <div className="ml-6">• Opens dashboard with detailed charts</div>
+              <div className="ml-6">• Shows endpoint performance statistics</div>
+              <div className="ml-6">• Displays recent activity and trends</div>
+            </div>
           </div>
         </div>
       </div>

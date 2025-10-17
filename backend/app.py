@@ -17,13 +17,13 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), 'models'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'config'))
 
-# Import MediTox feature
+# Import MedToXAi feature
 try:
-    from models.meditox_feature import MediToxAI, analyze_chemical, get_safety_report
-    MEDITOX_AVAILABLE = True
+    from models.meditox_feature import MedToXAi, analyze_chemical, get_safety_report
+    MEDTOXAI_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ MediTox feature not available: {e}")
-    MEDITOX_AVAILABLE = False
+    print(f"⚠️ MedToXAi feature not available: {e}")
+    MEDTOXAI_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"])
@@ -32,11 +32,11 @@ CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://loc
 predictor = None
 db_service = None
 groq_client = None
-meditox_analyzer = None
+medtoxai_analyzer = None
 
 def initialize_services():
-    """Initialize all services (ML predictor, database, AI, MediTox)"""
-    global predictor, db_service, groq_client, meditox_analyzer
+    """Initialize all services (ML predictor, database, AI, MedToXAi)"""
+    global predictor, db_service, groq_client, medtoxai_analyzer
     
     # Initialize ML predictor
     try:
@@ -73,17 +73,17 @@ def initialize_services():
         print(f"⚠️ Groq AI client initialization failed: {e}")
         groq_client = None
     
-    # Initialize MediTox analyzer
-    if MEDITOX_AVAILABLE:
+    # Initialize MedToXAi analyzer
+    if MEDTOXAI_AVAILABLE:
         try:
-            meditox_analyzer = MediToxAI()
-            print("✅ MediTox analyzer initialized successfully")
+            medtoxai_analyzer = MedToXAi()
+            print("✅ MedToXAi analyzer initialized successfully")
         except Exception as e:
-            print(f"⚠️ MediTox analyzer initialization failed: {e}")
-            meditox_analyzer = None
+            print(f"⚠️ MedToXAi analyzer initialization failed: {e}")
+            medtoxai_analyzer = None
     else:
-        print("⚠️ MediTox feature not available")
-        meditox_analyzer = None
+        print("⚠️ MedToXAi feature not available")
+        medtoxai_analyzer = None
     
     return True
 
@@ -1062,6 +1062,96 @@ def get_analytics():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/download/results', methods=['GET'])
+def download_results():
+    """Download batch processing results as CSV"""
+    try:
+        if not db_service:
+            return jsonify({'error': 'Database service not available'}), 503
+            
+        # Get format from query parameter (csv, json, excel)
+        format_type = request.args.get('format', 'csv').lower()
+        limit = request.args.get('limit', 1000, type=int)
+        
+        # Fetch recent predictions
+        predictions = db_service.client.table('predictions')\
+            .select('*')\
+            .order('created_at', desc=True)\
+            .limit(limit)\
+            .execute()
+        
+        if not predictions.data:
+            return jsonify({'error': 'No results found'}), 404
+        
+        # Process data for export
+        export_data = []
+        for pred in predictions.data:
+            endpoints = pred.get('endpoints', {})
+            row = {
+                'SMILES': pred.get('smiles', ''),
+                'Molecule_Name': pred.get('molecule_name', 'Unknown'),
+                'Created_At': pred.get('created_at', ''),
+                'Overall_Prediction': 'Toxic' if any(
+                    v.get('prediction', '').lower() == 'toxic'
+                    for v in endpoints.values()
+                    if isinstance(v, dict)
+                ) else 'Safe'
+            }
+            
+            # Add endpoint-specific results
+            for endpoint_id, endpoint_data in endpoints.items():
+                if isinstance(endpoint_data, dict):
+                    row[f'{endpoint_id}_Prediction'] = endpoint_data.get('prediction', 'Unknown')
+                    row[f'{endpoint_id}_Probability'] = endpoint_data.get('probability', 0.0)
+                    row[f'{endpoint_id}_Confidence'] = endpoint_data.get('confidence', 'Unknown')
+            
+            export_data.append(row)
+        
+        if format_type == 'csv':
+            # Create CSV response
+            import csv
+            import io
+            output = io.StringIO()
+            
+            if export_data:
+                fieldnames = export_data[0].keys()
+                writer = csv.DictWriter(output, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(export_data)
+            
+            csv_data = output.getvalue()
+            output.close()
+            
+            from flask import Response
+            return Response(
+                csv_data,
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename=toxicity_results_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+                }
+            )
+        
+        elif format_type == 'json':
+            from flask import Response
+            import json
+            return Response(
+                json.dumps(export_data, indent=2),
+                mimetype='application/json',
+                headers={
+                    'Content-Disposition': f'attachment; filename=toxicity_results_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+                }
+            )
+        
+        else:
+            return jsonify({'error': f'Unsupported format: {format_type}'}), 400
+            
+    except Exception as e:
+        print(f"❌ Error downloading results: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/models/status', methods=['GET'])
 def get_model_status():
     """Get model status and performance"""
@@ -1131,12 +1221,420 @@ def get_molecules():
         print(f"❌ Error fetching molecules: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/meditox/analyze', methods=['POST'])
-def meditox_analyze():
-    """Analyze medicine using MediTox AI"""
+@app.route('/api/chemical-name-to-smiles', methods=['POST'])
+def chemical_name_to_smiles():
+    """Convert chemical name to SMILES using AI and chemical databases"""
     try:
-        if not meditox_analyzer:
-            return jsonify({'error': 'MediTox service not available'}), 503
+        data = request.get_json()
+        if not data or 'chemical_name' not in data:
+            return jsonify({'error': 'Chemical name required'}), 400
+        
+        chemical_name = data['chemical_name'].strip()
+        if not chemical_name:
+            return jsonify({'error': 'Empty chemical name'}), 400
+        
+        include_suggestions = data.get('include_suggestions', False)
+        
+        # Common chemical database for quick lookup
+        common_chemicals = {
+            'aspirin': {'smiles': 'CC(=O)OC1=CC=CC=C1C(=O)O', 'name': 'Aspirin'},
+            'caffeine': {'smiles': 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C', 'name': 'Caffeine'},
+            'ethanol': {'smiles': 'CCO', 'name': 'Ethanol'},
+            'acetaminophen': {'smiles': 'CC(=O)NC1=CC=C(C=C1)O', 'name': 'Acetaminophen'},
+            'paracetamol': {'smiles': 'CC(=O)NC1=CC=C(C=C1)O', 'name': 'Acetaminophen'},
+            'ibuprofen': {'smiles': 'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O', 'name': 'Ibuprofen'},
+            'benzene': {'smiles': 'C1=CC=CC=C1', 'name': 'Benzene'},
+            'toluene': {'smiles': 'CC1=CC=CC=C1', 'name': 'Toluene'},
+            'methanol': {'smiles': 'CO', 'name': 'Methanol'},
+            'acetone': {'smiles': 'CC(=O)C', 'name': 'Acetone'},
+            'phenol': {'smiles': 'C1=CC=C(C=C1)O', 'name': 'Phenol'},
+            'nicotine': {'smiles': 'CN1CCCC1C2=CN=CC=C2', 'name': 'Nicotine'},
+            'glucose': {'smiles': 'C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O', 'name': 'Glucose'},
+            'morphine': {'smiles': 'CN1CC[C@]23[C@@H]4[C@H]1C[C@H]([C@@H]4O)C=C2[C@H]([C@@H]([C@@H]3O)O)O', 'name': 'Morphine'},
+            'penicillin': {'smiles': 'CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C', 'name': 'Penicillin'},
+            'water': {'smiles': 'O', 'name': 'Water'},
+            'carbon dioxide': {'smiles': 'O=C=O', 'name': 'Carbon Dioxide'},
+            'ammonia': {'smiles': 'N', 'name': 'Ammonia'},
+            'sulfuric acid': {'smiles': 'O=S(=O)(O)O', 'name': 'Sulfuric Acid'},
+            'hydrochloric acid': {'smiles': 'Cl', 'name': 'Hydrochloric Acid'},
+            'sodium chloride': {'smiles': '[Na+].[Cl-]', 'name': 'Sodium Chloride'},
+            'testosterone': {'smiles': 'CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C', 'name': 'Testosterone'},
+            'estradiol': {'smiles': 'CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O', 'name': 'Estradiol'},
+            'cholesterol': {'smiles': 'CC(C)CCCC(C)C1CCC2C1(CCC3C2CC=C4C3(CCC(C4)O)C)C', 'name': 'Cholesterol'},
+            'dopamine': {'smiles': 'C1=CC(=C(C=C1CCN)O)O', 'name': 'Dopamine'},
+            'serotonin': {'smiles': 'C1=CC2=C(C=C1O)C(=CN2)CCN', 'name': 'Serotonin'},
+            'adrenaline': {'smiles': 'CNCC(C1=CC(=C(C=C1)O)O)O', 'name': 'Adrenaline'},
+            'epinephrine': {'smiles': 'CNCC(C1=CC(=C(C=C1)O)O)O', 'name': 'Epinephrine'}
+        }
+        
+        # Search for exact match or fuzzy match
+        chemical_key = chemical_name.lower().strip()
+        result = None
+        
+        # Exact match
+        if chemical_key in common_chemicals:
+            result = common_chemicals[chemical_key]
+        else:
+            # Fuzzy match - find partial matches
+            for key, value in common_chemicals.items():
+                if chemical_key in key or key in chemical_key:
+                    result = value
+                    break
+        
+        # Prepare response
+        response = {'success': False}
+        
+        if result:
+            response.update({
+                'success': True,
+                'smiles': result['smiles'],
+                'name': result['name'],
+                'source': 'database'
+            })
+        else:
+            # Try AI-powered conversion using Groq
+            try:
+                if groq_client:
+                    ai_prompt = f"""Convert the chemical name "{chemical_name}" to SMILES notation. 
+                    
+                    Respond with a valid JSON object containing:
+                    - "smiles": the SMILES string (or null if not found)
+                    - "name": the standard chemical name
+                    - "confidence": high/medium/low
+                    
+                    If you cannot find the chemical, set smiles to null."""
+                    
+                    ai_response = groq_client.chat.completions.create(
+                        model="llama-3.1-8b-instant",
+                        messages=[{"role": "user", "content": ai_prompt}],
+                        temperature=0.1,
+                        max_tokens=256
+                    )
+                    
+                    ai_text = ai_response.choices[0].message.content.strip()
+                    
+                    # Try to parse JSON response
+                    import json
+                    try:
+                        ai_data = json.loads(ai_text)
+                        if ai_data.get('smiles'):
+                            response.update({
+                                'success': True,
+                                'smiles': ai_data['smiles'],
+                                'name': ai_data.get('name', chemical_name),
+                                'confidence': ai_data.get('confidence', 'medium'),
+                                'source': 'ai'
+                            })
+                    except json.JSONDecodeError:
+                        pass
+            except Exception as ai_error:
+                print(f"AI conversion failed: {ai_error}")
+        
+        # Add suggestions if requested
+        if include_suggestions:
+            suggestions = []
+            query_lower = chemical_name.lower()
+            for key, value in common_chemicals.items():
+                if (query_lower in key or key in query_lower) and len(suggestions) < 8:
+                    chemical_type = 'drug' if key in ['aspirin', 'acetaminophen', 'ibuprofen', 'morphine', 'penicillin'] else \
+                                    'alcohol' if key in ['ethanol', 'methanol'] else \
+                                    'solvent' if key in ['benzene', 'toluene', 'acetone'] else \
+                                    'hormone' if key in ['testosterone', 'estradiol', 'adrenaline'] else \
+                                    'neurotransmitter' if key in ['dopamine', 'serotonin'] else 'chemical'
+                    
+                    suggestions.append({
+                        'name': value['name'],
+                        'smiles': value['smiles'],
+                        'type': chemical_type
+                    })
+            
+            response['suggestions'] = suggestions
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        print(f"❌ Chemical name to SMILES conversion error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/natural-language-to-chemical', methods=['POST'])
+def natural_language_to_chemical():
+    """Convert natural language query to chemical name and SMILES using AI"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Natural language query required'}), 400
+        
+        query = data['query'].strip()
+        if not query:
+            return jsonify({'error': 'Empty query'}), 400
+        
+        print(f"🔍 Processing natural language query: '{query}'")
+        
+        # Enhanced chemical database with natural language keywords
+        chemical_db = {
+            # Pain relievers / Analgesics
+            'aspirin': {
+                'smiles': 'CC(=O)OC1=CC=CC=C1C(=O)O',
+                'name': 'Aspirin',
+                'type': 'Pain Relief',
+                'keywords': ['painkiller', 'pain relief', 'headache', 'anti-inflammatory', 'fever reducer', 'analgesic', 'nsaid']
+            },
+            'acetaminophen': {
+                'smiles': 'CC(=O)NC1=CC=C(C=C1)O',
+                'name': 'Acetaminophen',
+                'type': 'Pain Relief',
+                'keywords': ['paracetamol', 'tylenol', 'painkiller', 'pain relief', 'headache', 'fever reducer', 'analgesic']
+            },
+            'ibuprofen': {
+                'smiles': 'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O',
+                'name': 'Ibuprofen',
+                'type': 'Pain Relief',
+                'keywords': ['advil', 'motrin', 'painkiller', 'pain relief', 'anti-inflammatory', 'fever reducer', 'nsaid']
+            },
+            'morphine': {
+                'smiles': 'CN1CC[C@]23[C@@H]4[C@H]1C[C@H]([C@@H]4O)C=C2[C@H]([C@@H]([C@@H]3O)O)O',
+                'name': 'Morphine',
+                'type': 'Pain Relief',
+                'keywords': ['strong painkiller', 'opioid', 'narcotic', 'severe pain', 'opiates']
+            },
+            
+            # Stimulants
+            'caffeine': {
+                'smiles': 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C',
+                'name': 'Caffeine',
+                'type': 'Stimulant',
+                'keywords': ['coffee', 'stimulant', 'energy', 'alertness', 'wake up', 'tea', 'energy drink']
+            },
+            'nicotine': {
+                'smiles': 'CN1CCCC1C2=CN=CC=C2',
+                'name': 'Nicotine',
+                'type': 'Stimulant',
+                'keywords': ['tobacco', 'cigarette', 'smoking', 'stimulant', 'addiction']
+            },
+            
+            # Alcohols
+            'ethanol': {
+                'smiles': 'CCO',
+                'name': 'Ethanol',
+                'type': 'Alcohol',
+                'keywords': ['alcohol', 'drinking alcohol', 'ethyl alcohol', 'booze', 'liquor', 'beer', 'wine']
+            },
+            'methanol': {
+                'smiles': 'CO',
+                'name': 'Methanol',
+                'type': 'Toxic Alcohol',
+                'keywords': ['wood alcohol', 'methyl alcohol', 'toxic alcohol', 'poisonous alcohol', 'antifreeze']
+            },
+            
+            # Antibiotics
+            'penicillin': {
+                'smiles': 'CC1([C@@H](N2[C@H](S1)[C@@H](C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C',
+                'name': 'Penicillin',
+                'type': 'Antibiotic',
+                'keywords': ['antibiotic', 'infection', 'bacteria', 'antimicrobial', 'penicillin']
+            },
+            
+            # Hormones
+            'testosterone': {
+                'smiles': 'CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C',
+                'name': 'Testosterone',
+                'type': 'Hormone',
+                'keywords': ['male hormone', 'testosterone', 'steroid hormone', 'sex hormone', 'androgen']
+            },
+            'estradiol': {
+                'smiles': 'CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O',
+                'name': 'Estradiol',
+                'type': 'Hormone',
+                'keywords': ['female hormone', 'estrogen', 'estradiol', 'sex hormone', 'reproductive hormone']
+            },
+            'adrenaline': {
+                'smiles': 'CNCC(C1=CC(=C(C=C1)O)O)O',
+                'name': 'Adrenaline',
+                'type': 'Hormone',
+                'keywords': ['epinephrine', 'stress hormone', 'fight or flight', 'emergency hormone', 'adrenaline']
+            },
+            
+            # Neurotransmitters
+            'dopamine': {
+                'smiles': 'C1=CC(=C(C=C1CCN)O)O',
+                'name': 'Dopamine',
+                'type': 'Neurotransmitter',
+                'keywords': ['neurotransmitter', 'reward', 'pleasure', 'motivation', 'brain chemical']
+            },
+            'serotonin': {
+                'smiles': 'C1=CC2=C(C=C1O)C(=CN2)CCN',
+                'name': 'Serotonin',
+                'type': 'Neurotransmitter',
+                'keywords': ['neurotransmitter', 'happiness', 'mood', 'depression', 'brain chemical']
+            },
+            
+            # Basic chemicals
+            'glucose': {
+                'smiles': 'C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O',
+                'name': 'Glucose',
+                'type': 'Sugar',
+                'keywords': ['sugar', 'blood sugar', 'energy', 'diabetes', 'glucose']
+            },
+            'cholesterol': {
+                'smiles': 'CC(C)CCCC(C)C1CCC2C1(CCC3C2CC=C4C3(CCC(C4)O)C)C',
+                'name': 'Cholesterol',
+                'type': 'Lipid',
+                'keywords': ['cholesterol', 'fat', 'lipid', 'heart disease', 'blood cholesterol']
+            },
+            'water': {
+                'smiles': 'O',
+                'name': 'Water',
+                'type': 'Basic',
+                'keywords': ['water', 'h2o', 'hydration', 'liquid']
+            },
+            
+            # Toxic solvents
+            'benzene': {
+                'smiles': 'C1=CC=CC=C1',
+                'name': 'Benzene',
+                'type': 'Toxic Solvent',
+                'keywords': ['benzene', 'toxic solvent', 'carcinogen', 'industrial solvent', 'aromatic']
+            },
+            'toluene': {
+                'smiles': 'CC1=CC=CC=C1',
+                'name': 'Toluene',
+                'type': 'Toxic Solvent',
+                'keywords': ['toluene', 'solvent', 'paint thinner', 'industrial chemical', 'aromatic']
+            },
+            'acetone': {
+                'smiles': 'CC(=O)C',
+                'name': 'Acetone',
+                'type': 'Solvent',
+                'keywords': ['acetone', 'nail polish remover', 'solvent', 'ketone']
+            },
+            'phenol': {
+                'smiles': 'C1=CC=C(C=C1)O',
+                'name': 'Phenol',
+                'type': 'Toxic Chemical',
+                'keywords': ['phenol', 'carbolic acid', 'toxic', 'disinfectant', 'antiseptic']
+            }
+        }
+        
+        # First try local keyword matching
+        query_lower = query.lower()
+        matches = []
+        
+        for chem_key, chem_data in chemical_db.items():
+            relevance_score = 0
+            matched_keywords = []
+            
+            # Check for keyword matches
+            for keyword in chem_data['keywords']:
+                if keyword in query_lower:
+                    relevance_score += len(keyword)  # Longer matches get higher scores
+                    matched_keywords.append(keyword)
+            
+            # Check chemical name match
+            if chem_data['name'].lower() in query_lower or chem_key in query_lower:
+                relevance_score += 20  # Boost for direct name matches
+                matched_keywords.append(chem_data['name'].lower())
+            
+            if relevance_score > 0:
+                matches.append({
+                    'chemical': chem_key,
+                    'data': chem_data,
+                    'score': relevance_score,
+                    'matched_keywords': matched_keywords
+                })
+        
+        # Sort by relevance score
+        matches.sort(key=lambda x: x['score'], reverse=True)
+        
+        # If we have good local matches, return the best one
+        if matches:
+            best_match = matches[0]
+            print(f"✅ Found local match: {best_match['data']['name']} (score: {best_match['score']})")
+            
+            return jsonify({
+                'success': True,
+                'chemical_name': best_match['data']['name'],
+                'smiles': best_match['data']['smiles'],
+                'type': best_match['data']['type'],
+                'source': 'local_database',
+                'relevance_score': best_match['score'],
+                'matched_keywords': best_match['matched_keywords']
+            })
+        
+        # If no local matches, try AI processing
+        if groq_client:
+            try:
+                print("🤖 Using AI for natural language processing...")
+                
+                ai_prompt = f"""You are a chemistry expert. Convert this natural language query to a specific chemical name and SMILES notation: "{query}"
+
+Examples:
+- "painkiller" → Aspirin (CC(=O)OC1=CC=CC=C1C(=O)O)
+- "stimulant in coffee" → Caffeine (CN1C=NC2=C1C(=O)N(C(=O)N2C)C)
+- "drinking alcohol" → Ethanol (CCO)
+- "toxic solvent" → Benzene (C1=CC=CC=C1)
+
+Respond with valid JSON:
+{{
+    "chemical_name": "exact chemical name",
+    "smiles": "SMILES notation",
+    "type": "category like Pain Relief, Stimulant, etc",
+    "confidence": "high/medium/low"
+}}
+
+If you cannot identify a specific chemical, set chemical_name and smiles to null."""
+
+                ai_response = groq_client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": ai_prompt}],
+                    temperature=0.1,
+                    max_tokens=512
+                )
+                
+                ai_text = ai_response.choices[0].message.content.strip()
+                print(f"🤖 AI Response: {ai_text}")
+                
+                # Parse AI response
+                import json
+                try:
+                    ai_data = json.loads(ai_text)
+                    if ai_data.get('chemical_name') and ai_data.get('smiles'):
+                        print(f"✅ AI converted '{query}' to {ai_data['chemical_name']}")
+                        return jsonify({
+                            'success': True,
+                            'chemical_name': ai_data['chemical_name'],
+                            'smiles': ai_data['smiles'],
+                            'type': ai_data.get('type', 'Unknown'),
+                            'confidence': ai_data.get('confidence', 'medium'),
+                            'source': 'ai_groq'
+                        })
+                except json.JSONDecodeError as je:
+                    print(f"❌ AI JSON parse error: {je}")
+                    
+            except Exception as ai_error:
+                print(f"❌ AI processing error: {ai_error}")
+        
+        # If all else fails
+        return jsonify({
+            'success': False,
+            'error': f'Could not find chemical for query: "{query}". Try being more specific (e.g., "painkiller", "coffee stimulant", "drinking alcohol").'
+        })
+        
+    except Exception as e:
+        print(f"❌ Natural language processing error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/medtoxai/analyze', methods=['POST'])
+def medtoxai_analyze():
+    """Analyze medicine using MedToXAi"""
+    try:
+        if not medtoxai_analyzer:
+            return jsonify({'error': 'MedToXAi service not available'}), 503
         
         data = request.get_json()
         if not data or 'input' not in data:
@@ -1146,13 +1644,13 @@ def meditox_analyze():
         if not input_data:
             return jsonify({'error': 'Empty input'}), 400
         
-        # Analyze using MediTox
-        results = meditox_analyzer.analyze_medicine(input_data)
+        # Analyze using MedToXAi
+        results = medtoxai_analyzer.analyze_medicine(input_data)
         
         # Generate report if requested
         report_format = data.get('format', 'json')
         if data.get('include_report', False):
-            report = meditox_analyzer.generate_report(results, report_format)
+            report = medtoxai_analyzer.generate_report(results, report_format)
             results['report'] = report
         
         return jsonify({
@@ -1164,14 +1662,14 @@ def meditox_analyze():
     except Exception as e:
         print(f"❌ MediTox analysis error: {e}")
         traceback.print_exc()
-        return jsonify({'error': f'MediTox analysis failed: {str(e)}'}), 500
+        return jsonify({'error': f'MedToXAi analysis failed: {str(e)}'}), 500
 
-@app.route('/api/meditox/safety-report', methods=['POST'])
-def meditox_safety_report():
+@app.route('/api/medtoxai/safety-report', methods=['POST'])
+def medtoxai_safety_report():
     """Generate safety report for medicine/chemical"""
     try:
-        if not meditox_analyzer:
-            return jsonify({'error': 'MediTox service not available'}), 503
+        if not medtoxai_analyzer:
+            return jsonify({'error': 'MedToXAi service not available'}), 503
         
         data = request.get_json()
         if not data or 'input' not in data:
@@ -1195,19 +1693,19 @@ def meditox_safety_report():
         print(f"❌ MediTox safety report error: {e}")
         return jsonify({'error': f'Safety report generation failed: {str(e)}'}), 500
 
-@app.route('/api/meditox/chemical-info', methods=['GET'])
-def meditox_chemical_info():
+@app.route('/api/medtoxai/chemical-info', methods=['GET'])
+def medtoxai_chemical_info():
     """Get chemical information from database"""
     try:
-        if not meditox_analyzer:
-            return jsonify({'error': 'MediTox service not available'}), 503
+        if not medtoxai_analyzer:
+            return jsonify({'error': 'MedToXAi service not available'}), 503
         
         chemical_name = request.args.get('name')
         if not chemical_name:
             return jsonify({'error': 'Chemical name required'}), 400
         
         # Get chemical info
-        chem_info = meditox_analyzer.get_chemical_info(chemical_name)
+        chem_info = medtoxai_analyzer.get_chemical_info(chemical_name)
         
         return jsonify({
             'success': True,

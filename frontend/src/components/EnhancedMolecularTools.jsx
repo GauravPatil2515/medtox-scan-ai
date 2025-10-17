@@ -176,7 +176,7 @@ const usePredictionHistory = () => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    const savedHistory = localStorage.getItem('drugtox_prediction_history');
+    const savedHistory = localStorage.getItem('medtoxai_prediction_history');
     if (savedHistory) {
       setHistory(JSON.parse(savedHistory));
     }
@@ -191,17 +191,17 @@ const usePredictionHistory = () => {
 
     const updatedHistory = [newPrediction, ...history.slice(0, 49)]; // Keep last 50
     setHistory(updatedHistory);
-    localStorage.setItem('drugtox_prediction_history', JSON.stringify(updatedHistory));
+    localStorage.setItem('medtoxai_prediction_history', JSON.stringify(updatedHistory));
 
     // Update analytics
-    const analytics = JSON.parse(localStorage.getItem('drugtox_analytics') || '{}');
+    const analytics = JSON.parse(localStorage.getItem('medtoxai_analytics') || '{}');
     analytics.totalPredictions = (analytics.totalPredictions || 0) + 1;
     if (prediction.overall_toxicity?.includes('HIGH')) {
       analytics.toxicCompounds = (analytics.toxicCompounds || 0) + 1;
     } else {
       analytics.safeCompounds = (analytics.safeCompounds || 0) + 1;
     }
-    localStorage.setItem('drugtox_analytics', JSON.stringify(analytics));
+    localStorage.setItem('medtoxai_analytics', JSON.stringify(analytics));
 
     // Update activity log
     const activity = JSON.parse(localStorage.getItem('drugtox_activity') || '[]');

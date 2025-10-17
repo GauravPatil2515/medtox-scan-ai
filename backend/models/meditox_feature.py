@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MediTox AI - Medicine Toxicity Analysis Feature
+MedToXAi - Medicine Toxicity Analysis Feature
 Complete module for integration into any project
 """
 
@@ -41,8 +41,8 @@ except ImportError:
 
 warnings.filterwarnings('ignore')
 
-class MediToxAI:
-    """Main MediTox AI class for medicine toxicity analysis"""
+class MedToXAi:
+    """Main MedToXAi class for medicine toxicity analysis"""
     
     def __init__(self, models_path="models/models_optimized.pkl"):
         self.models_path = models_path
@@ -243,7 +243,7 @@ class MediToxAI:
         """Generate analysis report"""
         report = {
             'timestamp': datetime.now().isoformat(),
-            'meditox_version': '1.0.0',
+            'medtoxai_version': '1.0.0',
             'analysis_results': analysis_results,
             'summary': self._generate_summary(analysis_results)
         }
@@ -280,7 +280,7 @@ class MediToxAI:
     
     def _format_text_report(self, report):
         """Format report as text"""
-        text = f"MediTox AI Analysis Report\n"
+        text = f"MedToXAi Analysis Report\n"
         text += f"Generated: {report['timestamp']}\n"
         text += f"{'='*50}\n\n"
         text += report['summary']

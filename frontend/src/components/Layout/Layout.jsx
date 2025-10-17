@@ -27,7 +27,7 @@ const Layout = () => {
       case '/contact':
         return 'Contact Support';
       default:
-        return 'DrugTox AI';
+        return 'MedToXAi';
     }
   };
 

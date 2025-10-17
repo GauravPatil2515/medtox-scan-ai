@@ -41,7 +41,7 @@ const Sidebar = ({ open, setOpen }) => {
             </div>
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white">DrugTox AI</h1>
+            <h1 className="text-lg font-bold text-white">MedToXAi</h1>
             <p className="text-xs text-primary-200">Molecular Predictions</p>
           </div>
         </Link>

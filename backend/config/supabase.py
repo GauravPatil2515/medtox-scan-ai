@@ -18,7 +18,7 @@ class SupabaseConfig:
     """Supabase configuration and client management"""
     
     def __init__(self):
-        # Supabase credentials for MedTox-Scan-AI project
+        # Supabase credentials for MedToXAi project
         self.url = os.getenv('SUPABASE_URL', 'https://ifryersmyctokdkvysvx.supabase.co')
         self.key = os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmcnllcnNteWN0b2tka3Z5c3Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MTg5NDksImV4cCI6MjA3NTk5NDk0OX0.-bokGI7PqmQasY-oNjuYlkN0hiRRAtz2KGNvwvYTKcM')
         self.service_key = os.getenv('SUPABASE_SERVICE_KEY', 'your-service-key-here')

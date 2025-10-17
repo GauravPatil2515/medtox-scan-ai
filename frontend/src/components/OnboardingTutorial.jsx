@@ -12,7 +12,7 @@ const OnboardingTutorial = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('drugtox_tutorial_completed');
+    const hasSeenTutorial = localStorage.getItem('medtoxai_tutorial_completed');
     if (!hasSeenTutorial) {
       setTimeout(() => setIsVisible(true), 1000);
     }
@@ -20,7 +20,7 @@ const OnboardingTutorial = ({ onComplete }) => {
 
   const steps = [
     {
-      title: "Welcome to DrugTox-AI! 🧪",
+      title: "Welcome to MedToXAi! 🧪",
       content: "Your advanced AI-powered drug toxicity prediction platform. Let's take a quick tour of the key features.",
       image: "🎯",
       highlight: null
@@ -72,7 +72,7 @@ const OnboardingTutorial = ({ onComplete }) => {
   };
 
   const completeTutorial = () => {
-    localStorage.setItem('drugtox_tutorial_completed', 'true');
+    localStorage.setItem('medtoxai_tutorial_completed', 'true');
     setIsVisible(false);
     if (onComplete) {
       onComplete();
@@ -287,7 +287,7 @@ const QuickHelp = () => {
             <div className="p-6 border-t border-gray-200">
               <button
                 onClick={() => {
-                  localStorage.removeItem('drugtox_tutorial_completed');
+                  localStorage.removeItem('medtoxai_tutorial_completed');
                   setIsOpen(false);
                   window.location.reload();
                 }}

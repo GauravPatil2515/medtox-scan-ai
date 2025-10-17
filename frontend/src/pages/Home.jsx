@@ -98,7 +98,7 @@ const Home = () => {
             <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-7xl mb-6">
               Welcome to{' '}
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                DrugTox-AI
+                MedToXAi
               </span>
             </h1>
             

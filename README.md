@@ -1,4 +1,4 @@
-# 🧪 MedTox-AI Platform
+# 🧪 MedToXAi Platform
 
 > **AI-powered molecular toxicity prediction system with OCR image analysis and intelligent chemical safety assessment**
 
@@ -19,8 +19,8 @@
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/GauravPatil2515/medtox-scan-ai.git
-cd medtox-scan-ai
+git clone https://github.com/GauravPatil2515/medtoxai.git
+cd medtoxai
 ```
 
 2. **Backend Setup**
@@ -79,7 +79,7 @@ npm start
 ## 📁 Project Structure
 
 ```
-medtox-scan-ai/
+medtoxai/
 ├── backend/                    # Flask API server
 │   ├── app.py                 # Main Flask application
 │   ├── requirements.txt       # Python dependencies
