@@ -1,4 +1,4 @@
-# 🧬 DrugTox-AI Enhanced Dashboard
+# 🧬 MedToXAi Enhanced Backend
 
 ## 📊 Features
 
@@ -30,16 +30,31 @@
 
 ## 🚀 Quick Start
 
-### Windows (Recommended)
+### 1. Environment Configuration
 
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env file with your credentials
+# Required: GROQ_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY
+notepad .env  # Windows
+nano .env     # Linux/Mac
+
+# Validate environment setup
+python validate_env.py
+```
+
+### 2. Installation
+
+#### Windows (Recommended)
 ```bash
 # Double-click run_dashboard.bat
 # or from command line:
 run_dashboard.bat
 ```
 
-### Manual Setup
-
+#### Manual Setup
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -53,7 +68,7 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Start dashboard
+# Start backend server
 python app.py
 ```
 

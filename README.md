@@ -14,6 +14,23 @@
 - Python 3.8+
 - Node.js 16+
 - npm or yarn
+- Groq API Key
+- Supabase Account (optional but recommended)
+
+### 🔒 Security Setup
+
+⚠️ **Important**: Never commit API keys or sensitive credentials to version control!
+
+1. **Configure Environment Variables**
+```bash
+# Backend configuration
+cd backend
+cp .env.example .env
+# Edit .env with your actual API keys and credentials
+
+# Validate configuration
+python validate_env.py
+```
 
 ### 🔧 Installation
 

@@ -20,9 +20,13 @@ class GroqConfig:
     
     def __init__(self):
         # Groq API configuration
-        self.api_key = os.getenv('GROQ_API_KEY', 'your-groq-api-key-here')
-        self.default_model = "llama3-8b-8192"  # Use available Groq model
+        self.api_key = os.getenv('GROQ_API_KEY')
+        self.default_model = os.getenv('AI_MODEL', 'llama3-8b-8192')
         
+        # Validate required environment variables
+        if not self.api_key:
+            logger.warning("GROQ_API_KEY environment variable not set")
+            
         # Initialize client
         self._client: Optional[Groq] = None
         

@@ -454,45 +454,58 @@ The text recognition system could not process this image.
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Image Preview */}
-            <div>
-              <img
-                src={imagePreview}
-                alt="Uploaded"
-                className="w-full h-64 object-contain bg-gray-50 rounded-lg"
-              />
+            <div className="lg:col-span-1">
+              <div className="sticky top-4">
+                <img
+                  src={imagePreview}
+                  alt="Uploaded"
+                  className="w-full h-64 object-contain bg-gray-50 rounded-lg border border-gray-200"
+                />
+              </div>
             </div>
 
             {/* Extracted Text */}
-            <div>
+            <div className="lg:col-span-2">
               <h4 className="font-medium text-gray-900 mb-2">Extracted SMILES</h4>
               {step === 'ocr' && !extractedText && (
-                <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-4 h-32 flex items-center justify-center">
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-8 h-48 flex items-center justify-center border border-purple-200">
                     {isProcessing ? (
                       <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                        <p className="mt-2 text-sm text-gray-600">Processing: {ocrProgress}%</p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mx-auto"></div>
+                        <p className="mt-4 text-lg font-medium text-gray-700">Analyzing Image...</p>
+                        <p className="mt-1 text-sm text-gray-600">Progress: {ocrProgress}%</p>
+                        <div className="mt-3 w-32 bg-gray-200 rounded-full h-2 mx-auto">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${ocrProgress}%` }}
+                          ></div>
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-gray-500">Click "Extract Text" to begin OCR</p>
+                      <div className="text-center">
+                        <PhotoIcon className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+                        <p className="text-lg font-medium text-gray-700">Ready to Analyze</p>
+                        <p className="text-sm text-gray-500">Click the button below to start OCR + AI analysis</p>
+                      </div>
                     )}
                   </div>
                   <button
                     onClick={performOCR}
                     disabled={isProcessing}
-                    className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed flex items-center justify-center font-medium text-lg shadow-lg transition-all duration-200"
                   >
                     {isProcessing ? (
                       <>
-                        <ArrowPathIcon className="h-5 w-5 mr-2 animate-spin" />
-                        Analyzing... {ocrProgress}%
+                        <ArrowPathIcon className="h-6 w-6 mr-3 animate-spin" />
+                        🔬 Analyzing Image... {ocrProgress}%
                       </>
                     ) : (
                       <>
-                        <PhotoIcon className="h-5 w-5 mr-2" />
-                        Tesseract OCR + AI Analysis
+                        <PhotoIcon className="h-6 w-6 mr-3" />
+                        🚀 Start Tesseract OCR + AI Analysis
                       </>
                     )}
                   </button>
@@ -503,53 +516,58 @@ The text recognition system could not process this image.
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Analysis Report
+                      📊 Detailed Analysis Report
                     </label>
                     <textarea
                       value={extractedText}
                       readOnly
-                      className="w-full h-32 p-3 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm"
+                      className="w-full h-64 p-4 border border-gray-300 rounded-lg bg-gray-50 font-mono text-xs leading-relaxed resize-none"
                       placeholder="Analysis report will appear here..."
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      SMILES String for Prediction
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      🧬 SMILES String for Prediction
                       {!extractedSmiles && <span className="text-orange-600 ml-2">⚠️ No SMILES found - enter manually</span>}
+                      {extractedSmiles && <span className="text-green-600 ml-2">✅ Ready for prediction</span>}
                     </label>
                     <input
                       type="text"
                       value={extractedSmiles}
                       onChange={(e) => setExtractedSmiles(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono"
-                      placeholder="Enter SMILES notation (e.g., CCO for ethanol)"
+                      className="w-full p-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono bg-gray-50"
+                      placeholder="Enter SMILES notation (e.g., CC(=O)Nc1ccc(O)cc1 for Paracetamol)"
                     />
+                    <p className="mt-2 text-xs text-gray-500">
+                      💡 Tip: SMILES (Simplified Molecular Input Line Entry System) represents molecular structures
+                    </p>
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-3 mt-6">
                     <button
                       onClick={performOCR}
                       disabled={isProcessing}
-                      className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 flex items-center justify-center"
                     >
-                      Re-extract
+                      <ArrowPathIcon className="h-5 w-5 mr-2" />
+                      Re-extract Text
                     </button>
                     {step === 'predict' && (
                       <button
                         onClick={predictToxicity}
                         disabled={isProcessing || !extractedSmiles}
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 flex items-center justify-center"
+                        className="px-8 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center font-medium transition-colors shadow-sm"
                       >
                         {isProcessing ? (
                           <>
                             <ArrowPathIcon className="h-5 w-5 mr-2 animate-spin" />
-                            Predicting...
+                            Analyzing Toxicity...
                           </>
                         ) : (
                           <>
                             <BeakerIcon className="h-5 w-5 mr-2" />
-                            Predict Toxicity
+                            🎯 Predict Toxicity
                           </>
                         )}
                       </button>

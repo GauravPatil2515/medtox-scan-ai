@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Predictions from './pages/Predictions';
 import EnhancedPredictions from './pages/EnhancedPredictions';
 import BatchProcessing from './pages/BatchProcessing';
+import Chat from './pages/Chat';
 import { NotificationProvider } from './components/NotificationSystem';
 import { OnboardingTutorial, QuickHelp } from './components/OnboardingTutorial';
 import ChemBioBot from './components/ChemBioBot';
@@ -26,6 +27,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="predictions" element={<EnhancedPredictions />} />
             <Route path="batch" element={<BatchProcessing />} />
+            <Route path="chat" element={<Chat />} />
             <Route path="settings" element={<Settings />} />
             <Route path="help" element={<Help />} />
             <Route path="contact" element={<Contact />} />

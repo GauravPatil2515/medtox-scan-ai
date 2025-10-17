@@ -815,6 +815,147 @@ Format responses with clear sections, technical accuracy, and educational value.
         print(f"❌ AI chat error: {e}")
         return jsonify({'error': f'AI chat failed: {str(e)}'}), 500
 
+@app.route('/api/chat/ask', methods=['POST'])
+def chat_ask():
+    """Dedicated Chat page endpoint - specialized chemistry/toxicology AI assistant"""
+    try:
+        if not groq_client:
+            return jsonify({'error': 'AI chat service not available'}), 503
+        
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'error': 'Message required'}), 400
+        
+        user_message = data['message'].strip()
+        context = data.get('context', 'chemistry_toxicology')
+        
+        if not user_message:
+            return jsonify({'error': 'Empty message'}), 400
+        
+        # Enhanced system prompt for dedicated chat page
+        system_prompt = """You are MedToXAi Assistant, an expert AI specialized in chemistry, toxicology, pharmaceutical sciences, and drug discovery.
+
+🧪 **CORE EXPERTISE:**
+• Molecular structures, SMILES notation, and chemical properties analysis
+• Toxicology endpoints and comprehensive safety assessment methodologies
+• Drug discovery processes, ADME properties, and pharmacokinetic modeling
+• Computational chemistry, QSAR modeling, and molecular descriptor analysis
+• Protein-drug interactions, mechanism of action, and binding affinity studies
+• Regulatory toxicology, risk assessment frameworks, and compliance guidelines
+
+🎯 **SPECIALIZED KNOWLEDGE AREAS:**
+• **Toxicity Endpoints**: NR-AR-LBD (Androgen Receptor), NR-AhR (Aryl Hydrocarbon Receptor), SR-MMP (Mitochondrial Membrane Potential), NR-ER-LBD (Estrogen Receptor), NR-AR (Androgen Receptor)
+• **ADME Properties**: Absorption kinetics, Distribution patterns, Metabolism pathways, Excretion mechanisms
+• **Safety Assessment**: Hepatotoxicity mechanisms, Cardiotoxicity indicators, Genotoxicity assays, Reproductive toxicity studies
+• **Chemical Databases**: ChEMBL compound data, PubChem molecular information, ToxCast screening results, Tox21 assay data
+• **ML Models**: Random Forest algorithms, Support Vector Machines, Neural networks for toxicity prediction, Ensemble methods
+
+RESPONSE STRUCTURE GUIDELINES:
+• Format: Use clear sections, bullet points (•), and simple formatting for better readability
+• Scientific Accuracy: Provide precise, evidence-based information with appropriate caveats
+• Explanations: Break down complex concepts into digestible parts with examples
+• Practical Application: Include real-world applications and case studies when relevant
+• Safety Notes: Always emphasize when to consult healthcare professionals or regulatory experts
+• References: Mention relevant databases, literature, or methodologies when applicable
+• NO MARKDOWN: Do not use bold, italic, headers, or code blocks - use plain text with clear structure
+
+PLATFORM INTEGRATION:
+You are the AI brain of MedToXAi, a cutting-edge molecular toxicity prediction platform featuring:
+• 5-Endpoint Prediction System: Comprehensive toxicity assessment across key biological targets
+• SMILES Analysis Engine: Advanced chemical structure interpretation and property prediction
+• AI-Powered Insights: Machine learning-driven safety and efficacy predictions
+• Research Support: Tools for safer chemical design and drug development decisions
+
+RESPONSE STYLE:
+• Start with a brief, direct answer to the user's question
+• Follow with detailed explanation in structured sections
+• Include practical examples or case studies when helpful
+• End with actionable insights or next steps
+• Maintain scientific rigor while being accessible and educational
+• Use appropriate technical terminology but explain complex terms
+• Use plain text formatting without markdown symbols
+
+Always be helpful, accurate, and educational while maintaining the highest standards of scientific integrity."""
+
+        # Create messages for the conversation
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ]
+        
+        # Use groq client to get response (potentially using gpt-oss-120b if configured)
+        try:
+            response = groq_client.client.chat.completions.create(
+                model=os.getenv('AI_MODEL', 'llama3-8b-8192'),
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1500,
+                top_p=0.9
+            )
+            
+            ai_response = response.choices[0].message.content.strip()
+            
+            # Clean response from markdown formatting
+            cleaned_response = ai_response.replace('**', '').replace('*', '').replace('##', '').replace('#', '').replace('```', '').replace('`', '')
+            
+            return jsonify({
+                'success': True,
+                'response': cleaned_response,
+                'message': user_message,
+                'context': context,
+                'model': os.getenv('AI_MODEL', 'llama3-8b-8192'),
+                'timestamp': datetime.now().isoformat()
+            })
+            
+        except Exception as groq_error:
+            print(f"❌ Groq API error: {groq_error}")
+            # Enhanced fallback response with basic knowledge
+            fallback_response = f"""Temporary Service Interruption
+
+I am currently experiencing technical difficulties with the main AI service, but I can provide some basic guidance:
+
+Your Question: {user_message}
+
+Basic Chemistry & Toxicology Guidance:
+
+If asking about SMILES notation:
+• SMILES (Simplified Molecular Input Line Entry System) represents molecular structures as text strings
+• Example: C1=CC=CC=C1 represents benzene (hexagonal ring)
+• Each character represents atoms and bonds in a systematic way
+
+If asking about toxicity endpoints:
+• NR-AR-LBD: Androgen Receptor Ligand Binding Domain - affects hormonal activity
+• NR-AhR: Aryl Hydrocarbon Receptor - involved in xenobiotic metabolism
+• SR-MMP: Mitochondrial Membrane Potential - indicates cellular stress
+• NR-ER-LBD: Estrogen Receptor - hormonal disruption indicator
+• NR-AR: Androgen Receptor - endocrine disruption marker
+
+If asking about drug safety:
+• ADME properties (Absorption, Distribution, Metabolism, Excretion) are crucial
+• Hepatotoxicity often results from reactive metabolites
+• Cardiotoxicity may involve ion channel interactions
+
+Try These Approaches:
+• Rephrase your question more specifically
+• Ask about individual concepts rather than complex combinations
+• Use technical terms like "mechanism", "pathway", or "assessment"
+
+Service Status: The full AI capabilities will be restored shortly. Try your question again in a moment for detailed, expert-level analysis!"""
+            
+            return jsonify({
+                'success': False,
+                'response': fallback_response,
+                'message': user_message,
+                'error': 'AI service temporarily unavailable',
+                'timestamp': datetime.now().isoformat()
+            })
+        
+    except Exception as e:
+        print(f"❌ Chat ask error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Chat service failed: {str(e)}'}), 500
+
 @app.route('/api/database/predictions', methods=['GET'])
 def get_user_predictions():
     """Get user's prediction history from database"""
@@ -1305,7 +1446,7 @@ def chemical_name_to_smiles():
                     If you cannot find the chemical, set smiles to null."""
                     
                     ai_response = groq_client.chat.completions.create(
-                        model="llama-3.1-8b-instant",
+                        model=os.getenv('AI_MODEL', 'llama3-8b-8192'),
                         messages=[{"role": "user", "content": ai_prompt}],
                         temperature=0.1,
                         max_tokens=256
@@ -1587,7 +1728,7 @@ Respond with valid JSON:
 If you cannot identify a specific chemical, set chemical_name and smiles to null."""
 
                 ai_response = groq_client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
+                    model=os.getenv('AI_MODEL', 'llama3-8b-8192'),
                     messages=[{"role": "user", "content": ai_prompt}],
                     temperature=0.1,
                     max_tokens=512

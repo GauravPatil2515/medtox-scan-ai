@@ -5,10 +5,8 @@ import {
   HomeIcon, 
   BeakerIcon, 
   DocumentDuplicateIcon,
-  CogIcon,
-  XMarkIcon,
-  QuestionMarkCircleIcon,
-  PhoneIcon
+  ChatBubbleLeftRightIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
@@ -16,13 +14,10 @@ const navigation = [
   { name: 'Dashboard', href: '/app/dashboard', icon: HomeIcon },
   { name: 'Predictions', href: '/app/predictions', icon: BeakerIcon },
   { name: 'Batch Processing', href: '/app/batch', icon: DocumentDuplicateIcon },
+  { name: 'Chat', href: '/app/chat', icon: ChatBubbleLeftRightIcon },
 ];
 
-const secondaryNavigation = [
-  { name: 'Settings', href: '/app/settings', icon: CogIcon },
-  { name: 'Help', href: '/app/help', icon: QuestionMarkCircleIcon },
-  { name: 'Contact', href: '/app/contact', icon: PhoneIcon },
-];
+
 
 const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
@@ -80,28 +75,7 @@ const Sidebar = ({ open, setOpen }) => {
             </ul>
           </li>
 
-          {/* Secondary navigation */}
-          <li className="mt-auto">
-            <div className="text-xs font-semibold leading-6 text-primary-200 mb-3">
-              Support
-            </div>
-            <ul role="list" className="-mx-2 space-y-1">
-              {secondaryNavigation.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    className="text-primary-200 hover:text-white hover:bg-white/10 hover:scale-105 hover:shadow-md group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-medium transition-all duration-300 ease-in-out cursor-pointer"
-                  >
-                    <item.icon
-                      className="h-5 w-5 shrink-0 text-primary-300 group-hover:text-white group-hover:scale-110 transition-all duration-300"
-                      aria-hidden="true"
-                    />
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </li>
+
         </ul>
       </nav>
 
