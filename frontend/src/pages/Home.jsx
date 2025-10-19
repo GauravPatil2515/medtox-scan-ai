@@ -46,9 +46,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 relative overflow-hidden">
-      {/* Grid Background */}
-      <div className="absolute inset-0 bg-grid-pink-100/[0.04] bg-[size:20px_20px]" />
-      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/80 to-transparent" />
+      {/* Enhanced Grid Background with Animation */}
+      <div className="absolute inset-0 bg-grid-pink-200/[0.08] bg-[size:24px_24px] animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/70 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-pink-50/20 via-transparent to-purple-50/20" />
       
       {/* Top Navigation */}
       <nav className="relative z-50 flex items-center justify-between px-6 lg:px-8 py-4">
@@ -111,7 +112,7 @@ const Home = () => {
             <div className="flex items-center justify-center gap-x-6 mb-16">
               <button
                 onClick={() => navigate('/app/predictions')}
-                className="group relative px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-300"
+                className="group relative px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-300 hover:brightness-110"
               >
                 <span className="flex items-center">
                   Start Analysis
@@ -121,7 +122,7 @@ const Home = () => {
               
               <button
                 onClick={() => navigate('/app/contact')}
-                className="group px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl shadow-lg border border-gray-200 hover:border-pink-300 hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-300"
+                className="group px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl shadow-lg border border-gray-200 hover:border-pink-300 hover:shadow-2xl hover:shadow-pink-200/30 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-gray-300"
               >
                 Chat
               </button>
@@ -129,7 +130,7 @@ const Home = () => {
 
             {/* Chat Section */}
             <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 hover:shadow-2xl hover:shadow-pink-100/50 transition-all duration-300">
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center mr-4">
                     <BeakerIcon className="h-5 w-5 text-pink-600" />
@@ -159,12 +160,13 @@ const Home = () => {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-white/70 backdrop-blur-sm py-16 sm:py-20 border-y border-gray-100">
+      <div className="bg-white/80 backdrop-blur-sm py-16 sm:py-20 border-y border-gray-100 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-pink-50/30 via-transparent to-purple-50/30" />
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((stat, index) => (
               <div key={index} className="text-center group cursor-pointer">
-                <div className="transform group-hover:scale-110 transition-all duration-300">
+                <div className="transform group-hover:scale-110 transition-all duration-300 group-hover:drop-shadow-lg">
                   <dt className="text-4xl font-bold text-transparent bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text group-hover:from-purple-600 group-hover:to-pink-600 transition-all duration-300">
                     {stat.value}
                   </dt>
@@ -194,7 +196,10 @@ const Home = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="group relative rounded-2xl bg-white/80 backdrop-blur-sm p-8 shadow-lg ring-1 ring-gray-200 hover:shadow-xl hover:ring-pink-300 transform hover:scale-105 transition-all duration-300 cursor-pointer"
+                className="group relative rounded-2xl bg-white/90 backdrop-blur-sm p-8 shadow-lg ring-1 ring-gray-200 hover:shadow-2xl hover:shadow-pink-500/20 hover:ring-pink-400 hover:bg-white transform hover:scale-105 transition-all duration-500 cursor-pointer hover:glow"
+                style={{
+                  boxShadow: 'hover:0 0 30px rgba(236, 72, 153, 0.3)'
+                }}
               >
                 <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 group-hover:from-purple-500 group-hover:to-pink-500 transition-all duration-300 mb-6">
                   <feature.icon className="h-6 w-6 text-white" />
@@ -213,7 +218,8 @@ const Home = () => {
 
       {/* CTA Section */}
       <div className="bg-gradient-to-r from-pink-600 to-purple-600 py-16 sm:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/[0.1] bg-[size:30px_30px]" />
+        <div className="absolute inset-0 bg-grid-white/[0.15] bg-[size:32px_32px] animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5" />
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">

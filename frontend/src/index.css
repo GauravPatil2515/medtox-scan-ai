@@ -17,13 +17,21 @@ body {
   background-color: #f9fafb;
 }
 
-/* Grid backgrounds */
+/* Enhanced Grid backgrounds */
 .bg-grid-pink-100\/\[0\.04\] {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23fce7f3'%3e%3cpath d='m0 .5h32v32'/%3e%3c/svg%3e");
 }
 
+.bg-grid-pink-200\/\[0\.08\] {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23fbcfe8' opacity='0.8'%3e%3cpath d='m0 .5h32v32'/%3e%3c/svg%3e");
+}
+
 .bg-grid-white\/\[0\.1\] {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23ffffff'%3e%3cpath d='m0 .5h32v32'/%3e%3c/svg%3e");
+}
+
+.bg-grid-white\/\[0\.15\] {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23ffffff' opacity='0.15'%3e%3cpath d='m0 .5h32v32'/%3e%3c/svg%3e");
 }
 
 /* Custom scrollbar */
@@ -114,4 +122,49 @@ body {
 
 .btn-hover:hover::before {
   left: 100%;
+}
+
+/* Enhanced Glow Effects */
+.hover\:glow:hover {
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.3), 0 0 40px rgba(236, 72, 153, 0.2), 0 0 60px rgba(236, 72, 153, 0.1);
+  animation: glow-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+  from {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3), 0 0 40px rgba(236, 72, 153, 0.2), 0 0 60px rgba(236, 72, 153, 0.1);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(236, 72, 153, 0.4), 0 0 50px rgba(236, 72, 153, 0.3), 0 0 75px rgba(236, 72, 153, 0.2);
+  }
+}
+
+/* Subtle grid animation */
+@keyframes grid-float {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px); 
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateY(-2px) translateX(1px); 
+    opacity: 0.8;
+  }
+}
+
+.animate-grid {
+  animation: grid-float 4s ease-in-out infinite;
+}
+
+/* Enhanced shadow effects */
+.shadow-glow-pink {
+  box-shadow: 0 10px 25px -3px rgba(236, 72, 153, 0.1), 0 4px 6px -2px rgba(236, 72, 153, 0.05);
+}
+
+.shadow-glow-pink:hover {
+  box-shadow: 0 20px 40px -4px rgba(236, 72, 153, 0.25), 0 8px 16px -4px rgba(236, 72, 153, 0.1);
+}
+
+/* Gradient text glow */
+.text-glow {
+  text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
 }
