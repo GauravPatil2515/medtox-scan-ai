@@ -52,51 +52,51 @@ const Home = () => {
       <div className="absolute inset-0 bg-gradient-to-r from-pink-50/20 via-transparent to-purple-50/20" />
       
       {/* Top Navigation */}
-      <nav className="relative z-50 flex items-center justify-between px-6 lg:px-8 py-4">
-        <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center">
-            <BeakerIcon className="h-5 w-5 text-white" />
+      <nav className="relative z-50 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center">
+            <BeakerIcon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <span className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
             DrugTox-AI
           </span>
         </div>
         
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6">
           <button
             onClick={() => navigate('/app/dashboard')}
-            className="flex items-center space-x-2 text-pink-600 hover:text-pink-700 font-medium transition-colors duration-200"
+            className="flex items-center space-x-1 sm:space-x-2 text-pink-600 hover:text-pink-700 font-medium transition-colors duration-200 text-sm sm:text-base"
           >
-            <ChartBarIcon className="h-5 w-5" />
-            <span>Dashboard</span>
+            <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Dashboard</span>
           </button>
           <button
             onClick={() => navigate('/app/predictions')}
-            className="flex items-center space-x-2 text-pink-600 hover:text-pink-700 font-medium transition-colors duration-200"
+            className="flex items-center space-x-1 sm:space-x-2 text-pink-600 hover:text-pink-700 font-medium transition-colors duration-200 text-sm sm:text-base"
           >
-            <BeakerIcon className="h-5 w-5" />
-            <span>Analysis</span>
+            <BeakerIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Analysis</span>
           </button>
           <button
             onClick={() => navigate('/app/contact')}
-            className="flex items-center space-x-2 text-pink-600 hover:text-pink-700 font-medium transition-colors duration-200"
+            className="flex items-center space-x-1 sm:space-x-2 text-pink-600 hover:text-pink-700 font-medium transition-colors duration-200 text-sm sm:text-base"
           >
-            <ChatBubbleLeftRightIcon className="h-5 w-5" />
-            <span>Chat</span>
+            <ChatBubbleLeftRightIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Chat</span>
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="relative px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl pt-12 pb-20 sm:pt-16 sm:pb-32">
+      <div className="relative px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl pt-8 pb-12 sm:pt-12 sm:pb-20 lg:pt-16 lg:pb-32">
           <div className="text-center">
             {/* Badge */}
-            <div className="inline-flex items-center px-4 py-2 mb-8 bg-pink-100 border border-pink-200 rounded-full text-pink-700 text-sm font-medium">
+            <div className="inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 mb-6 sm:mb-8 bg-pink-100 border border-pink-200 rounded-full text-pink-700 text-xs sm:text-sm font-medium">
               AI-Powered Drug Toxicity Analysis
             </div>
             
-            <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-7xl mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-gray-900 mb-4 sm:mb-6 px-4">
               Welcome to{' '}
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 MedToXAi

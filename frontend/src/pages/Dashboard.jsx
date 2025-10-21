@@ -164,66 +164,66 @@ const Dashboard = () => {
       {!isLoading && !error && (
         <>
           {/* Welcome Section */}
-          <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 text-white">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome to MedToXAi!</h1>
-                <p className="text-primary-100 text-lg">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">Welcome to MedToXAi!</h1>
+                <p className="text-primary-100 text-sm sm:text-base lg:text-lg">
                   Your molecular toxicity prediction platform is ready. 
                   Monitor predictions, analyze results, and discover insights.
                 </p>
               </div>
-              <div className="hidden lg:block">
-                <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <BeakerIcon className="w-16 h-16 text-white" />
+              <div className="hidden lg:block flex-shrink-0 ml-4">
+                <div className="w-24 h-24 xl:w-32 xl:h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <BeakerIcon className="w-12 h-12 xl:w-16 xl:h-16 text-white" />
                 </div>
               </div>
             </div>
             
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-4 mt-6">
+            <div className="flex flex-wrap gap-2 sm:gap-3 lg:gap-4 mt-4 sm:mt-6">
               <button 
                 onClick={() => window.location.href = '/app/predictions'}
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-all duration-200 flex items-center space-x-1.5 sm:space-x-2 text-sm sm:text-base"
               >
-                <BeakerIcon className="w-4 h-4" />
+                <BeakerIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>New Prediction</span>
               </button>
               <button 
                 onClick={() => window.location.href = '/app/analytics'}
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-all duration-200 flex items-center space-x-1.5 sm:space-x-2 text-sm sm:text-base"
               >
-                <ChartBarIcon className="w-4 h-4" />
+                <ChartBarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>View Analytics</span>
               </button>
             </div>
           </div>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {stats.map((stat) => (
-              <div key={stat.name} className="bg-white rounded-xl shadow-soft p-6 hover:shadow-luxury transition-shadow duration-300">
+              <div key={stat.name} className="bg-white rounded-xl shadow-soft p-4 sm:p-6 hover:shadow-luxury transition-shadow duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className={clsx('p-3 rounded-lg', getStatColor(stat.color))}>
-                      <stat.icon className="w-6 h-6 text-white" />
+                    <div className={clsx('p-2 sm:p-3 rounded-lg', getStatColor(stat.color))}>
+                      <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                    <div className={clsx('text-sm flex items-center justify-end mt-1', {
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</div>
+                    <div className={clsx('text-xs sm:text-sm flex items-center justify-end mt-1', {
                       'text-success-600': stat.changeType === 'increase',
                       'text-danger-600': stat.changeType === 'decrease',
                       'text-gray-600': stat.changeType === 'neutral'
                     })}>
-                      {stat.changeType === 'increase' && <ArrowUpIcon className="w-4 h-4 mr-1" />}
-                      {stat.changeType === 'decrease' && <ArrowDownIcon className="w-4 h-4 mr-1" />}
+                      {stat.changeType === 'increase' && <ArrowUpIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
+                      {stat.changeType === 'decrease' && <ArrowDownIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />}
                       {stat.change}
                     </div>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-600">{stat.name}</h3>
+                <div className="mt-3 sm:mt-4">
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-600">{stat.name}</h3>
                 </div>
               </div>
             ))}
@@ -231,23 +231,24 @@ const Dashboard = () => {
 
           {/* Recent Predictions */}
           <div className="bg-white rounded-xl shadow-soft">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Recent Predictions</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Recent Predictions</h2>
                 <button 
                   onClick={() => window.location.href = '/app/predictions'}
-                  className="text-primary-600 hover:text-primary-500 text-sm font-medium flex items-center space-x-1"
+                  className="text-primary-600 hover:text-primary-500 text-xs sm:text-sm font-medium flex items-center space-x-1"
                 >
-                  <EyeIcon className="w-4 h-4" />
-                  <span>View all</span>
+                  <EyeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">View all</span>
+                  <span className="sm:hidden">All</span>
                 </button>
               </div>
             </div>
             
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
               {recentPredictions.length === 0 ? (
-                <div className="text-center py-12">
-                  <BeakerIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <div className="text-center py-8 sm:py-12">
+                  <BeakerIcon className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
                   <p className="text-gray-600">No predictions yet</p>
                   <button 
                     onClick={() => window.location.href = '/app/predictions'}
