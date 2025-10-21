@@ -9,3 +9,7 @@ scikit-learn>=1.2.0
 groq>=0.4.0
 supabase>=2.0.0
 python-dotenv>=1.0.0
+
+# ChemBERT - Chemical Transformer Model
+transformers>=4.30.0
+torch>=2.0.0
