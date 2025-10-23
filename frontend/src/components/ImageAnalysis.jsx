@@ -85,7 +85,6 @@ const ImageAnalysis = () => {
           'eng',
           {
             logger: m => {
-              console.log('Tesseract progress:', m);
               if (m.status === 'recognizing text') {
                 const progress = 30 + (m.progress * 40); // 30-70%
                 setOcrProgress(Math.round(progress));

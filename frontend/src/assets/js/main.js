@@ -249,7 +249,6 @@ function handleResize() {
 // Update chart sizes (placeholder)
 function updateChartSizes() {
     // Placeholder for chart resize logic
-    console.log('Updating chart sizes');
 }
 
 // Adjust mobile layout
@@ -299,7 +298,6 @@ function updateLastActivity() {
 // Load recent activity (placeholder)
 function loadRecentActivity() {
     // This would load recent predictions, system events, etc.
-    console.log('Loading recent activity');
 }
 
 // API helper functions
