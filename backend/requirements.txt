@@ -13,3 +13,7 @@ python-dotenv>=1.0.0
 # ChemBERT - Chemical Transformer Model
 transformers>=4.30.0
 torch>=2.0.0
+
+# Production Server
+gunicorn>=21.2.0
+gevent>=23.9.1

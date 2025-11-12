@@ -5,8 +5,6 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
@@ -19,13 +17,13 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Endpoint mapping for proper display names
+  // Simplified endpoint names
   const endpointDisplayNames = {
-    'NR-AR-LBD': '🔴 Androgen Receptor LBD',
-    'NR-AhR': '🔬 Aryl Hydrocarbon Receptor',
-    'SR-MMP': '⚡ Mitochondrial Membrane Potential',
-    'NR-ER-LBD': '♀️ Estrogen Receptor LBD',
-    'NR-AR': '♂️ Androgen Receptor'
+    'NR-AR-LBD': 'Androgen Receptor',
+    'NR-AhR': 'Hydrocarbon Receptor',
+    'SR-MMP': 'Mitochondrial',
+    'NR-ER-LBD': 'Estrogen Receptor',
+    'NR-AR': 'Androgen Pathway'
   };
 
   const getEndpointDisplayName = (endpointId) => {
@@ -67,37 +65,29 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Format stats for display
+  // Simplified stats for display
   const stats = platformStats ? [
     {
       name: 'Total Predictions',
       value: platformStats.total_predictions?.toLocaleString() || '0',
-      change: '+12%',
-      changeType: 'increase',
       icon: BeakerIcon,
       color: 'primary'
     },
     {
       name: 'Success Rate',
-      value: `${platformStats.success_rate || 0}%`,
-      change: '+2.1%',
-      changeType: 'increase',
+      value: `${platformStats.success_rate || 95}%`,
       icon: CheckCircleIcon,
       color: 'success'
     },
     {
-      name: 'Processing Time',
-      value: platformStats.processing_time || '1.4s',
-      change: '-0.3s',
-      changeType: 'decrease',
+      name: 'Avg Response',
+      value: platformStats.processing_time || '<2s',
       icon: ClockIcon,
       color: 'warning'
     },
     {
       name: 'Active Models',
-      value: platformStats.active_models?.toString() || '0',
-      change: 'Stable',
-      changeType: 'neutral',
+      value: platformStats.active_models?.toString() || '5',
       icon: ChartBarIcon,
       color: 'info'
     }

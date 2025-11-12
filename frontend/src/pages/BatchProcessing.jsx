@@ -15,11 +15,11 @@ import { clsx } from 'clsx';
 
 const BatchProcessing = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
-  const [processingStatus, setProcessingStatus] = useState('idle'); // idle, running, paused, completed, error
+  const [processingStatus, setProcessingStatus] = useState('idle');
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState(null);
-  const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, downloading, completed, error
-  const [analyticsStatus, setAnalyticsStatus] = useState('idle'); // idle, loading, completed, error
+  const [downloadStatus, setDownloadStatus] = useState('idle');
+  const [analyticsStatus, setAnalyticsStatus] = useState('idle');
 
   const [jobQueue] = useState([
     {
