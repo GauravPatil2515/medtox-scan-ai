@@ -13,7 +13,7 @@ const Chat = () => {
     {
       id: 1,
       role: 'assistant',
-      content: 'Welcome to MedToXAi Assistant!\n\nI am your specialized AI companion for chemistry, toxicology, and pharmaceutical sciences. I can provide expert insights on:\n\nCore Expertise:\n• Chemical Analysis: SMILES notation, molecular descriptors, structure-activity relationships\n• Toxicology: Safety assessments, endpoint interpretations (NR-AR, NR-AhR, SR-MMP, etc.)\n• Drug Discovery: ADME properties, pharmacokinetics, mechanism of action\n• Risk Assessment: Hepatotoxicity, cardiotoxicity, reproductive toxicity\n• Computational Chemistry: QSAR modeling, molecular dynamics, prediction algorithms\n\nTry asking about:\n• Explain the toxicity mechanisms of benzene\n• What are the key ADME properties for drug development?\n• How do I interpret SMILES notation?\n• Compare toxicity profiles of common painkillers\n\nI am designed to provide scientifically accurate, detailed explanations while making complex concepts accessible.\n\nWhat would you like to explore today?',
+      content: 'Welcome to MedToXAi Assistant!\n\nI\'m here to help you with molecular toxicity analysis and drug safety questions.\n\nI can help with:\n• Chemical structure analysis\n• Toxicity predictions\n• Drug safety assessments\n• Molecular property explanations\n\nTry asking:\n• "Explain benzene toxicity"\n• "What makes a drug safe?"\n• "How do I read SMILES notation?"\n• "Compare aspirin and ibuprofen"\n\nWhat would you like to know?',
       timestamp: new Date()
     }
   ]);
@@ -30,14 +30,14 @@ const Chat = () => {
   }, [messages]);
 
   const predefinedQuestions = [
-    "Explain benzene toxicity mechanisms",
-    "Key toxicology testing endpoints",
-    "ADME properties in drug safety",
-    "What causes hepatotoxicity?",
-    "SMILES notation basics",
-    "Compare aspirin vs ibuprofen toxicity",
-    "How to interpret NR-AR endpoint?",
-    "Drug-drug interaction prediction"
+    "What is benzene toxicity?",
+    "How are drugs tested for safety?",
+    "What makes a drug safe?",
+    "Explain liver toxicity",
+    "How to read chemical structures?",
+    "Compare aspirin and ibuprofen",
+    "What is molecular analysis?",
+    "How do drugs interact?"
   ];
 
   const handleSendMessage = async () => {

@@ -42,48 +42,38 @@ const Predictions = () => {
   const endpoints = [
     {
       id: 'NR-AR-LBD',
-      name: '🔴 Androgen Receptor LBD',
-      normalName: 'Androgen Receptor LBD',
-      description: 'Androgen receptor ligand binding domain',
-      icon: '🔴',
-      color: 'danger',
-      auc: 0.839
+      name: 'Androgen Receptor',
+      normalName: 'Androgen Receptor',
+      description: 'Androgen receptor pathway',
+      color: 'danger'
     },
     {
       id: 'NR-AhR',
-      name: '🔬 Aryl Hydrocarbon Receptor',
-      normalName: 'Aryl Hydrocarbon Receptor',
-      description: 'Xenobiotic metabolism pathway',
-      icon: '🔬',
-      color: 'warning',
-      auc: 0.834
+      name: 'Hydrocarbon Receptor',
+      normalName: 'Hydrocarbon Receptor',
+      description: 'Metabolism pathway',
+      color: 'warning'
     },
     {
       id: 'SR-MMP',
-      name: '⚡ Mitochondrial Membrane Potential',
-      normalName: 'Mitochondrial Membrane Potential',
-      description: 'Mitochondrial toxicity assessment',
-      icon: '⚡',
-      color: 'info',
-      auc: 0.808
+      name: 'Mitochondrial',
+      normalName: 'Mitochondrial Potential',
+      description: 'Mitochondrial assessment',
+      color: 'info'
     },
     {
       id: 'NR-ER-LBD',
-      name: '♀️ Estrogen Receptor LBD',
-      normalName: 'Estrogen Receptor LBD',
-      description: 'Estrogen receptor ligand binding domain',
-      icon: '♀️',
-      color: 'primary',
-      auc: 0.776
+      name: 'Estrogen Receptor',
+      normalName: 'Estrogen Receptor',
+      description: 'Estrogen pathway',
+      color: 'primary'
     },
     {
       id: 'NR-AR',
-      name: '♂️ Androgen Receptor',
-      normalName: 'Androgen Receptor',
-      description: 'Full androgen receptor pathway',
-      icon: '♂️',
-      color: 'success',
-      auc: 0.752
+      name: 'Androgen Pathway',
+      normalName: 'Androgen Pathway',
+      description: 'Full androgen pathway',
+      color: 'success'
     }
   ];
 

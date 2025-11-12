@@ -1,0 +1,59 @@
+services:
+  # Backend Service (Python Flask API)
+  - type: web
+    name: medtoxai-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && gunicorn --bind 0.0.0.0:$PORT app:app --workers 2 --timeout 120"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: False
+      - key: CORS_ORIGINS
+        value: https://medtoxai-frontend.onrender.com
+      - key: AI_MODEL
+        value: llama-3.3-70b-versatile
+      - key: AI_TEMPERATURE
+        value: 0.7
+      - key: AI_MAX_TOKENS
+        value: 1024
+    healthCheckPath: /api/health
+
+  # Frontend Service (React Static Site)
+  - type: web
+    name: medtoxai-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: ./frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://medtoxai-backend.onrender.com
+      - key: NODE_VERSION
+        value: 18.17.0
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
