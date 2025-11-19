@@ -16,6 +16,10 @@ import json
 # Add modules to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'models'))
 sys.path.append(os.path.join(os.path.dirname(__file__), 'config'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+
+# Import caching system
+from utils.cache import PredictionCache, CachedPredictionWrapper, prediction_cache
 
 # Import MedToXAi feature
 try:
@@ -30,20 +34,25 @@ CORS(app, origins=["http://localhost:3000", "http://localhost:3001", "http://loc
 
 # Global instances
 predictor = None
+predictor_cached = None  # Cached predictor wrapper
 db_service = None
 groq_client = None
 medtoxai_analyzer = None
+cache = prediction_cache  # Use global cache instance
 
 def initialize_services():
     """Initialize all services (ML predictor, database, AI, MedToXAi)"""
-    global predictor, db_service, groq_client, medtoxai_analyzer
+    global predictor, predictor_cached, db_service, groq_client, medtoxai_analyzer, cache
     
-    # Initialize ML predictor
+    # Initialize ML predictor with caching
     try:
         from models.simple_predictor import SimpleDrugToxPredictor
         predictor = SimpleDrugToxPredictor()
         if predictor.is_loaded:
+            # Wrap predictor with caching
+            predictor_cached = CachedPredictionWrapper(predictor, cache)
             print("✅ DrugTox predictor initialized successfully")
+            print(f"✅ Prediction caching enabled (TTL: 1 hour, Max size: 10000)")
         else:
             print("❌ DrugTox predictor failed to load")
             return False
@@ -93,8 +102,37 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'predictor_loaded': predictor is not None and predictor.is_loaded
+        'predictor_loaded': predictor is not None and predictor.is_loaded,
+        'cache_enabled': True,
+        'cache_stats': cache.get_stats() if cache else None
     })
+
+@app.route('/api/cache/stats', methods=['GET'])
+def get_cache_stats():
+    """Get prediction cache statistics"""
+    try:
+        stats = cache.get_stats()
+        stats['cache_size_mb'] = cache.get_cache_size_mb()
+        return jsonify({
+            'success': True,
+            'cache_stats': stats
+        })
+    except Exception as e:
+        print(f"❌ Error getting cache stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cache/clear', methods=['POST'])
+def clear_cache():
+    """Clear prediction cache"""
+    try:
+        cache.clear()
+        return jsonify({
+            'success': True,
+            'message': 'Cache cleared successfully'
+        })
+    except Exception as e:
+        print(f"❌ Error clearing cache: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/endpoints', methods=['GET'])
 def get_endpoints():
@@ -123,8 +161,11 @@ def predict_single():
         if not smiles:
             return jsonify({'error': 'Empty SMILES string'}), 400
         
-        # Get prediction
-        result = predictor.predict_single(smiles)
+        # Get prediction with caching enabled
+        if predictor_cached:
+            result = predictor_cached.predict_single(smiles)
+        else:
+            result = predictor.predict_single(smiles)
         
         if 'error' in result:
             return jsonify({'error': result['error']}), 500
