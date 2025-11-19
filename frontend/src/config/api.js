@@ -36,8 +36,8 @@ export const config = {
   retryDelay: 1000, // 1 second
 };
 
-// Helper function for API calls
-export const apiCall = async (url, options = {}) => {
+// Helper function for API calls with retry logic and timeout
+export const apiCall = async (url, options = {}, attempt = 1) => {
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -47,18 +47,66 @@ export const apiCall = async (url, options = {}) => {
   };
 
   try {
-    const response = await fetch(url, defaultOptions);
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+    
+    // Make fetch request
+    const response = await fetch(url, {
+      ...defaultOptions,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP error! status: ${response.status}`);
+      const errorMessage = error.error || `HTTP error! status: ${response.status}`;
+      
+      // Retry on server errors (5xx) or specific cases
+      if (response.status >= 500 && attempt < config.retryAttempts) {
+        console.warn(`[API] Server error (${response.status}). Retry attempt ${attempt}/${config.retryAttempts} in ${config.retryDelay}ms`);
+        await sleep(config.retryDelay);
+        return apiCall(url, options, attempt + 1);
+      }
+      
+      throw new Error(errorMessage);
     }
     
     return await response.json();
   } catch (error) {
-    console.error('API call failed:', error);
+    // Handle timeout errors
+    if (error.name === 'AbortError') {
+      if (attempt < config.retryAttempts) {
+        console.warn(`[API] Request timeout. Retry attempt ${attempt}/${config.retryAttempts} in ${config.retryDelay}ms`);
+        await sleep(config.retryDelay);
+        return apiCall(url, options, attempt + 1);
+      }
+      throw new Error(`Request timeout after ${config.timeout}ms. Server may be unresponsive.`);
+    }
+    
+    // Handle network errors
+    if (!navigator.onLine) {
+      throw new Error('No internet connection. Please check your network and try again.');
+    }
+    
+    // Don't retry on client errors (4xx) or if max attempts exceeded
+    if (error.message.includes('HTTP error! status: 4')) {
+      throw error;
+    }
+    
+    if (attempt < config.retryAttempts) {
+      console.warn(`[API] Network error. Retry attempt ${attempt}/${config.retryAttempts} in ${config.retryDelay}ms`);
+      await sleep(config.retryDelay);
+      return apiCall(url, options, attempt + 1);
+    }
+    
+    console.error(`[API] Failed after ${config.retryAttempts} attempts:`, error);
     throw error;
   }
 };
+
+// Utility function for sleep/delay
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default config;
