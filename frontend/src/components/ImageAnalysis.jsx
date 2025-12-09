@@ -10,6 +10,8 @@ import {
   ExclamationTriangleIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
+import { validateImage } from '../utils/validation';
+import { getSpecificErrorMessage } from '../utils/errorMessages';
 
 const ImageAnalysis = () => {
   const [image, setImage] = useState(null);
@@ -22,10 +24,17 @@ const ImageAnalysis = () => {
   const [error, setError] = useState(null);
   const [step, setStep] = useState('upload'); // upload, ocr, predict, result
 
-  // Handle file drop
+  // Handle file drop with validation
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
+      // ✅ NEW: Validate image before processing
+      const validation = validateImage(file);
+      if (!validation.valid) {
+        setError(validation.error);
+        return;
+      }
+
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
       setExtractedText('');
@@ -59,27 +68,27 @@ const ImageAnalysis = () => {
 
     try {
       setOcrProgress(10);
-      
+
       // Step 1: Extract text using Tesseract OCR (Primary Method)
       setOcrProgress(20);
-      
+
       // Convert blob URL to image element
       const img = new Image();
       img.src = imagePreview;
-      
+
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
       });
-      
+
       setOcrProgress(30);
-      
+
       // Create Tesseract worker with proper v6 API
       let ocrText = '';
-      
+
       try {
         // Use Tesseract.recognize directly (recommended for v6)
-        
+
         const { data: { text } } = await Tesseract.recognize(
           image,
           'eng',
@@ -95,41 +104,41 @@ const ImageAnalysis = () => {
             preserve_interword_spaces: '1'
           }
         );
-        
+
         ocrText = text.trim();
-        
+
       } catch (tesseractError) {
         console.error('Tesseract OCR failed:', tesseractError);
-        
+
         // Fallback: Try with worker approach
         try {
           worker = await Tesseract.createWorker('eng');
-          
+
           const { data: { text } } = await worker.recognize(image);
           ocrText = text.trim();
-          
+
           await worker.terminate();
           worker = null;
-          
+
         } catch (fallbackError) {
           console.error('All OCR methods failed:', fallbackError);
-          
+
           // Final fallback - manual input mode
           throw new Error('OCR_FAILED');
         }
       }
-      
+
       setOcrProgress(70);
-      
+
       // Step 2: Analyze OCR text with Groq LLM for chemical components
       let textAnalysisResult = null;
       if (ocrText && ocrText.length > 5) {
         const textAnalysisResponse = await fetch('http://localhost:5000/api/analyze-chemical-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             text: ocrText,
-            image_name: image.name 
+            image_name: image.name
           })
         });
 
@@ -146,7 +155,7 @@ const ImageAnalysis = () => {
             insights: 'Chemical analysis unavailable - raw OCR text extracted'
           };
         }
-        
+
         // Step 3: Use the analysis result
         const finalResult = textAnalysisResult || {
           ingredients: [],
@@ -156,19 +165,19 @@ const ImageAnalysis = () => {
           confidence: 'low',
           raw_text: ocrText
         };
-        
+
         const ingredients = finalResult.ingredients || [];
         const smilesStrings = finalResult.smiles || [];
         const formulas = finalResult.formulas || [];
         const primaryIngredient = finalResult.primary_ingredient || '';
         const quantities = finalResult.quantities || [];
         const aiReport = finalResult.ai_report || finalResult.insights || '';
-        
+
         // Store the first valid SMILES if found
         if (smilesStrings.length > 0) {
           setExtractedSmiles(smilesStrings[0]);
         }
-        
+
         // Build comprehensive result display
         const resultText = `
 🔬 AI-Powered Chemical Analysis Report
@@ -191,7 +200,7 @@ ${aiReport}
 
 ${smilesStrings.length > 0 ? '\n✅ Ready for toxicity prediction!' : '⚠️ No SMILES found - you can manually enter one below'}
         `.trim();
-        
+
         setExtractedText(resultText);
       } else {
         // No text extracted - show manual input option
@@ -216,7 +225,7 @@ Please try with:
 
 📝 You can manually enter chemical information below.
         `.trim();
-        
+
         setExtractedText(resultText);
       }
 
@@ -226,7 +235,7 @@ Please try with:
 
     } catch (err) {
       console.error('Analysis Error:', err);
-      
+
       // Cleanup worker if it exists
       if (worker) {
         try {
@@ -235,11 +244,11 @@ Please try with:
           console.error('Error cleaning up worker:', cleanupErr);
         }
       }
-      
+
       // Handle OCR-specific failures
       if (err.message === 'OCR_FAILED' || err.message.includes('Aborted') || err.message.includes('WebAssembly') || err.message.includes('OCR')) {
         setError('OCR engine unavailable. You can manually enter chemical information below.');
-        
+
         // Show manual input interface
         const fallbackText = `
 🔬 Manual Chemical Analysis Mode
@@ -262,13 +271,13 @@ The text recognition system could not process this image.
 1. Enter your chemical data in the SMILES field below
 2. Click 'Predict Toxicity' for AI analysis
         `.trim();
-        
+
         setExtractedText(fallbackText);
         setStep('predict');
       } else {
         setError(`Analysis failed: ${err.message || 'Unknown error'}`);
       }
-      
+
       setIsProcessing(false);
       setOcrProgress(0);
     }
@@ -278,7 +287,7 @@ The text recognition system could not process this image.
   const predictToxicity = async () => {
     // Use extractedSmiles if available, otherwise try to extract from text
     let smilesString = extractedSmiles || extractedText;
-    
+
     if (!smilesString) {
       setError('No SMILES string available. Please enter one manually.');
       return;
@@ -313,11 +322,11 @@ The text recognition system could not process this image.
       }
 
       const data = await response.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
-      
+
       setPredictionResult(data);
       setStep('result');
       setIsProcessing(false);
@@ -342,11 +351,11 @@ The text recognition system could not process this image.
   // Calculate overall toxicity
   const getOverallToxicity = () => {
     if (!predictionResult || !predictionResult.predictions) return null;
-    
+
     const predictions = Object.values(predictionResult.predictions);
     const toxicCount = predictions.filter(p => p.prediction === 'Toxic').length;
     const totalCount = predictions.length;
-    
+
     return {
       percentage: ((toxicCount / totalCount) * 100).toFixed(1),
       toxicCount,
@@ -408,11 +417,10 @@ The text recognition system could not process this image.
       {step === 'upload' && (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
-            isDragActive
+          className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive
               ? 'border-purple-600 bg-purple-50'
               : 'border-gray-300 hover:border-purple-400 bg-white'
-          }`}
+            }`}
         >
           <input {...getInputProps()} />
           <PhotoIcon className="mx-auto h-16 w-16 text-gray-400" />
@@ -462,7 +470,7 @@ The text recognition system could not process this image.
                         <p className="mt-4 text-lg font-medium text-gray-700">Analyzing Image...</p>
                         <p className="mt-1 text-sm text-gray-600">Progress: {ocrProgress}%</p>
                         <div className="mt-3 w-32 bg-gray-200 rounded-full h-2 mx-auto">
-                          <div 
+                          <div
                             className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${ocrProgress}%` }}
                           ></div>
@@ -509,7 +517,7 @@ The text recognition system could not process this image.
                       placeholder="Analysis report will appear here..."
                     />
                   </div>
-                  
+
                   <div className="bg-white p-4 rounded-lg border border-gray-200">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       🧬 SMILES String for Prediction
@@ -527,7 +535,7 @@ The text recognition system could not process this image.
                       💡 Tip: SMILES (Simplified Molecular Input Line Entry System) represents molecular structures
                     </p>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-3 mt-6">
                     <button
                       onClick={performOCR}
@@ -568,11 +576,10 @@ The text recognition system could not process this image.
       {step === 'result' && predictionResult && (
         <div className="space-y-6">
           {/* Overall Result */}
-          <div className={`rounded-xl shadow-soft border-2 p-6 ${
-            overallToxicity.isToxic
+          <div className={`rounded-xl shadow-soft border-2 p-6 ${overallToxicity.isToxic
               ? 'bg-red-50 border-red-300'
               : 'bg-green-50 border-green-300'
-          }`}>
+            }`}>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">Overall Assessment</h3>
@@ -581,14 +588,12 @@ The text recognition system could not process this image.
                 </p>
               </div>
               <div className="text-right">
-                <div className={`text-4xl font-bold ${
-                  overallToxicity.isToxic ? 'text-red-600' : 'text-green-600'
-                }`}>
+                <div className={`text-4xl font-bold ${overallToxicity.isToxic ? 'text-red-600' : 'text-green-600'
+                  }`}>
                   {overallToxicity.percentage}%
                 </div>
-                <div className={`text-sm font-medium ${
-                  overallToxicity.isToxic ? 'text-red-600' : 'text-green-600'
-                }`}>
+                <div className={`text-sm font-medium ${overallToxicity.isToxic ? 'text-red-600' : 'text-green-600'
+                  }`}>
                   {overallToxicity.isToxic ? 'TOXIC' : 'SAFE'}
                 </div>
               </div>
@@ -610,11 +615,10 @@ The text recognition system could not process this image.
                       Probability: {(data.probability * 100).toFixed(1)}%
                     </div>
                   </div>
-                  <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                    data.prediction === 'Toxic'
+                  <div className={`px-4 py-2 rounded-full text-sm font-medium ${data.prediction === 'Toxic'
                       ? 'bg-red-100 text-red-700'
                       : 'bg-green-100 text-green-700'
-                  }`}>
+                    }`}>
                     {data.prediction}
                   </div>
                 </div>

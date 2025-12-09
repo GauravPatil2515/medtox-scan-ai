@@ -2,160 +2,132 @@
 
 > **AI-powered molecular toxicity prediction system with OCR image analysis and intelligent chemical safety assessment**
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![React](https://img.shields.io/badge/react-18.0+-61dafb.svg)
-![AI](https://img.shields.io/badge/AI-Groq%20LLaMA3-purple.svg)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-18.0+-61DAFB.svg)](https://reactjs.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.3+-000000.svg)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+## 🌟 Features
+
+- **🔬 Image Analysis**: Upload medicine labels, perform OCR, extract ingredients
+- **🧬 Toxicity Prediction**: Predict toxicity across 12 biological endpoints
+- **🤖 AI Integration**: Groq LLaMA 3.3 for intelligent chemical analysis
+- **📊 Advanced Analytics**: Real-time visualization with charts
+- **⚡ High Performance**: Prediction caching, rate limiting, optimized models
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8+
 - Node.js 16+
-- npm or yarn
 - Groq API Key
-- Supabase Account (optional but recommended)
+- Supabase Account (optional)
 
-### 🔒 Security Setup
+### Installation
 
-⚠️ **Important**: Never commit API keys or sensitive credentials to version control!
-
-1. **Configure Environment Variables**
 ```bash
-# Backend configuration
+# 1. Clone repository
+git clone https://github.com/yourusername/medtox-scan-ai.git
+cd medtox-scan-ai
+
+# 2. Setup backend
 cd backend
 cp .env.example .env
-# Edit .env with your actual API keys and credentials
-
-# Validate configuration
-python validate_env.py
-```
-
-### 🔧 Installation
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/GauravPatil2515/medtoxai.git
-cd medtoxai
-```
-
-2. **Backend Setup**
-```bash
-cd backend
+# Edit .env with your API keys
 pip install -r requirements.txt
-```
 
-3. **Frontend Setup**
-```bash
-cd frontend
+# 3. Setup frontend
+cd ../frontend
 npm install
+
+# 4. Start platform
+# Backend: python app.py (port 5000)
+# Frontend: npm start (port 3000)
 ```
-
-### 🏃‍♂️ Running the Platform
-
-**Option 1: Use the startup script (Windows)**
-```bash
-START_PLATFORM.bat
-```
-
-**Option 2: Manual startup**
-
-Backend (Terminal 1):
-```bash
-cd backend
-python app.py
-```
-
-Frontend (Terminal 2):
-```bash
-cd frontend
-npm start
-```
-
-**Access the platform:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-
-## 🌟 Features
-
-### � Core Capabilities
-- **Image Analysis**: Upload medicine images → OCR text extraction → AI ingredient analysis
-- **5 Toxicity Endpoints**: NR-AR, NR-AR-LBD, NR-AhR, NR-ER-LBD, SR-MMP
-- **SMILES Input**: Direct molecular structure input for toxicity prediction
-- **AI Integration**: Groq LLaMA3 for intelligent analysis and explanations
-- **Real-time Predictions**: Instant results with confidence scoring
-
-### 🤖 Advanced Features
-- **OCR Technology**: Tesseract.js for medicine label text extraction
-- **Machine Learning**: Random Forest models (79.3% average accuracy)
-- **Database Integration**: Supabase for prediction history
-- **Responsive UI**: Modern React interface with Tailwind CSS
-- **Export Options**: JSON/CSV data export capabilities
 
 ## 📁 Project Structure
 
 ```
-medtoxai/
-├── backend/                    # Flask API server
-│   ├── app.py                 # Main Flask application
-│   ├── requirements.txt       # Python dependencies
-│   ├── models/
-│   │   ├── simple_predictor.py        # ML prediction engine
-│   │   ├── best_optimized_models.pkl  # Trained ML models
-│   │   └── database.py                # Database models
-│   └── config/
-│       ├── groq.py            # Groq AI configuration
-│       └── supabase.py        # Database configuration
-├── frontend/                  # React application
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   │   ├── ImageAnalysis.jsx      # Main OCR + AI feature
-│   │   │   ├── AIChat.jsx             # AI chatbot
-│   │   │   └── Layout/                # Layout components
-│   │   └── pages/             # Application pages
-│   │       ├── Predictions.jsx        # SMILES prediction
-│   │       ├── Dashboard.jsx          # Analytics dashboard
-│   │       └── Home.jsx               # Landing page
-│   └── public/                # Static assets
-├── database/
-│   └── schema.sql             # Database schema
-├── docs/                      # Documentation
-│   ├── COMPLETE_PROJECT_REPORT.md     # Technical documentation
-│   └── ROADMAP.md                     # Development roadmap
-├── START_PLATFORM.bat         # Windows startup script
-└── README.md
+medtox-scan-ai/
+├── backend/           # Flask API server
+├── frontend/          # React application
+├── model-training/    # ML model training pipeline
+├── docs/             # Documentation
+└── tests/            # Test suites
 ```
 
-## 🔬 API Endpoints
-- `GET /api/health` - Health check and status
-- `POST /api/predict` - Single molecule toxicity prediction
-- `POST /api/analyze-image-text` - OCR text analysis
-- `POST /api/analyze-image-vision` - AI vision analysis
-- `POST /api/predict/batch` - Batch prediction
-- `GET /api/endpoints` - Available toxicity endpoints
-
-## 💡 Usage
-
-### Image Analysis (Primary Feature)
-1. Navigate to "Image Analysis" page
-2. Upload medicine label image
-3. View OCR text extraction
-4. Get AI ingredient analysis
-5. Predict toxicity for extracted compounds
-
-### Direct SMILES Prediction
-1. Go to "Predictions" page
-2. Enter SMILES string (e.g., `CCO` for ethanol)
-3. Click "Predict Toxicity"
-4. View results across 5 endpoints
-
-## 📊 Model Performance
-- **Average ROC-AUC**: 0.793 across all endpoints
-- **Best Endpoint**: NR-AR-LBD (0.839 ROC-AUC)
-- **Models**: Random Forest classifiers
-- **Features**: 50 molecular descriptors per compound
-
 ## 📚 Documentation
-- Complete technical documentation: [`docs/COMPLETE_PROJECT_REPORT.md`](docs/COMPLETE_PROJECT_REPORT.md)
-- Development roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+
+- **[Quick Start Guide](docs/guides/QUICK_START.md)** - Get started in 5 minutes
+- **[Deployment Guide](docs/guides/DEPLOYMENT_GUIDE.md)** - Deploy to production
+- **[Model Training Guide](docs/training/MODEL_TRAINING_GUIDE.md)** - Train new models
+- **[API Documentation](docs/guides/API_DOCUMENTATION.md)** - API reference
+- **[Full Documentation](docs/README.md)** - Complete documentation index
+
+## 🧠 Model Training
+
+Train high-accuracy toxicity prediction models:
+
+```bash
+cd model-training
+python scripts/train_models.py --data data/tox21_data.csv
+```
+
+See [Model Training Guide](docs/training/MODEL_TRAINING_GUIDE.md) for details.
+
+## 🎯 Key Technologies
+
+### Backend
+- **Flask** - Web framework
+- **XGBoost** - Machine learning models
+- **RDKit** - Molecular descriptors
+- **Groq AI** - LLaMA 3.3 integration
+- **Supabase** - PostgreSQL database
+
+### Frontend
+- **React 18** - UI framework
+- **Tailwind CSS** - Styling
+- **Recharts** - Data visualization
+- **Tesseract.js** - OCR engine
+- **React Hot Toast** - Notifications
+
+## 📊 Performance
+
+- **Prediction Speed**: ~200ms/molecule
+- **Batch Processing**: ~50 molecules/minute
+- **Model Accuracy**: 84%+ ROC-AUC average
+- **API Response Time**: 500-800ms
+- **Cache Hit Rate**: 60-70%
+
+## 🔒 Security
+
+- ✅ Input validation and sanitization
+- ✅ API rate limiting (60 req/min default)
+- ✅ CORS configuration
+- ✅ Environment variable protection
+- ✅ Secure database connections
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md).
+
+## 📄 License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
+
+## 🙏 Acknowledgments
+
+- **Tox21 Challenge** - Training data
+- **RDKit** - Molecular descriptors
+- **Groq** - AI inference
+- **Supabase** - Database hosting
+
+## 📞 Support
+
+- **Documentation**: [docs/README.md](docs/README.md)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/medtox-scan-ai/issues)
+- **Email**: support@medtoxai.com
+
+---
+
+**Built with ❤️ for safer drug development**

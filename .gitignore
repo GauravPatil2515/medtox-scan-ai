@@ -16,8 +16,6 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -25,32 +23,14 @@ MANIFEST
 
 # Virtual Environment
 venv/
-env/
 ENV/
+env/
+.venv
 
-# Flask
-instance/
-.webassets-cache
-
-# Environment variables
+# Environment Variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# React build
-frontend/build/
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+.env.*.local
 
 # IDE
 .vscode/
@@ -58,51 +38,67 @@ frontend/.env.production.local
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Logs
 *.log
 logs/
+*.log.*
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
+# Model files (large)
+*.pkl
+*.h5
+*.pt
+*.pth
+*.onnx
+*.pb
+
+# Data files (large)
+model-training/data/raw/*
+model-training/data/processed/*
+!model-training/data/raw/.gitkeep
+!model-training/data/processed/.gitkeep
+
+# Trained models (large)
+model-training/trained_models/*
+!model-training/trained_models/.gitkeep
+!model-training/trained_models/latest/.gitkeep
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# React Build
+frontend/build/
+frontend/dist/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # Temporary files
 *.tmp
 *.temp
+.cache/
 
-# Model files (if large)
-*.pkl
-*.joblib
-*.h5
-*.hdf5
+# Archive
+.archive/
 
-# Test files
-test_*.py
-*_test.py
-
-# Documentation builds
-docs/_build/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
+# OS
+Thumbs.db
+.DS_Store
